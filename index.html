@@ -111,7 +111,51 @@
   .liq-warn { background: rgba(255,77,106,0.08) !important; border-color: rgba(255,77,106,0.2) !important; color: var(--red) !important; }
   .sep { height: 1px; background: var(--border); margin: 8px 0; }
   .empty-msg { text-align: center; padding: 32px 16px; color: var(--muted); font-size: 12px; line-height: 2; }
-  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: repeat(2,1fr); } }
+
+  /* Live price panel */
+  .live-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+  .live-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .live-label { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+  .live-input-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .live-input {
+    flex: 1; background: var(--surface2); border: 1.5px solid rgba(77,159,255,0.35); border-radius: 5px;
+    color: var(--blue); font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+    padding: 7px 12px; outline: none; transition: border-color 0.2s; min-width: 0;
+  }
+  .live-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(77,159,255,0.1); }
+  .live-input::placeholder { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .live-coin-tag { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  .live-progress { margin-bottom: 10px; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+  .progress-bar-wrap { position: relative; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: visible; }
+  .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; background: linear-gradient(90deg, var(--green), var(--amber)); }
+  .progress-bar-fill.danger { background: linear-gradient(90deg, var(--amber), var(--red)); }
+  .progress-marker {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--bg);
+    transition: left 0.3s ease;
+  }
+
+  .live-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .live-stat { background: var(--surface2); border-radius: 5px; padding: 8px 10px; border: 1px solid var(--border); }
+  .live-stat .ls-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .live-stat .ls-val { font-size: 13px; font-weight: 700; }
+  .live-stat .ls-val.g { color: var(--green); }
+  .live-stat .ls-val.r { color: var(--red); }
+  .live-stat .ls-val.b { color: var(--blue); }
+  .live-stat .ls-val.a { color: var(--amber); }
+  .live-stat .ls-val.muted { color: var(--muted2); }
+  .live-stat .ls-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+  .pnl-highlight { border-color: rgba(0,229,160,0.25) !important; }
+  .pnl-highlight-red { border-color: rgba(255,77,106,0.25) !important; }
+
+  @media (max-width: 820px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: repeat(2,1fr); }
+    .live-stats { grid-template-columns: repeat(3,1fr); }
+  }
 </style>
 </head>
 <body>
@@ -153,6 +197,40 @@
 
     <div id="results" style="display:none;">
       <div class="stat-grid" id="stat-row"></div>
+
+      <!-- LIVE PRICE PANEL -->
+      <div class="live-panel" id="live-panel">
+        <div class="live-top">
+          <span class="live-label">Giá hiện tại</span>
+          <div class="live-input-wrap">
+            <input class="live-input" type="number" id="live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="onLivePrice()">
+            <span class="live-coin-tag" id="live-coin-tag">USDT</span>
+          </div>
+        </div>
+
+        <!-- Progress bar: from entry1 → last long entry, with liq marker -->
+        <div class="live-progress" id="live-progress" style="display:none;">
+          <div class="progress-labels">
+            <span id="pg-left"></span>
+            <span id="pg-center" style="color:var(--amber)"></span>
+            <span id="pg-right"></span>
+          </div>
+          <div class="progress-bar-wrap" id="pg-wrap">
+            <div class="progress-bar-fill" id="pg-fill" style="width:0%"></div>
+            <div class="progress-marker" id="pg-marker" style="left:0%;background:var(--blue)"></div>
+            <div class="progress-marker" id="pg-liq" style="left:0%;background:var(--red);display:none"></div>
+          </div>
+        </div>
+
+        <div class="live-stats" id="live-stats">
+          <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="ls-pnl-long">—</div><div class="ls-sub" id="ls-ror-long"></div></div>
+          <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="ls-pnl-short">—</div><div class="ls-sub" id="ls-ror-short"></div></div>
+          <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="ls-pnl-total">—</div><div class="ls-sub" id="ls-dw"></div></div>
+          <div class="live-stat"><div class="ls-label">Giá giảm từ L1→Lcuối</div><div class="ls-val a" id="ls-drop-range">—</div><div class="ls-sub" id="ls-drop-cur"></div></div>
+          <div class="live-stat"><div class="ls-label">Vị trí giá</div><div class="ls-val b" id="ls-position">—</div><div class="ls-sub" id="ls-vs-entry"></div></div>
+        </div>
+      </div>
+
       <div class="panel">
         <div class="tabs">
           <button class="tab active" onclick="switchTab('entries')">Lệnh vào</button>
@@ -203,6 +281,162 @@ let filled = []; // filled[i]: true = lệnh khớp
 
 function fmt(n, dec=2) { return (n>=0?'':'-') + Math.abs(n).toFixed(dec); }
 
+function onLivePrice() {
+  if (!state) return;
+  const p = parseFloat(document.getElementById('live-price').value);
+  const {lf,sf,liLong,liShort} = getFilledSummary();
+  const {long,short,n_long,balance,leverage,e1} = state;
+
+  // Update coin tag
+  document.getElementById('live-coin-tag').textContent = (state.coin||'USDT').replace(/USDT$/,'') + '/USDT';
+
+  if (isNaN(p) || p <= 0) {
+    ['ls-pnl-long','ls-pnl-short','ls-pnl-total','ls-drop-range','ls-position'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'ls-val muted'; el.textContent = '—';
+    });
+    ['ls-ror-long','ls-ror-short','ls-dw','ls-drop-cur','ls-vs-entry'].forEach(id => document.getElementById(id).textContent='');
+    document.getElementById('live-progress').style.display = 'none';
+    return;
+  }
+
+  // PnL calculations (only filled orders)
+  const plRaw = lf ? (p - lf.newEntry) * lf.totalCoins : 0;
+  const plNet = lf ? plRaw - lf.fee : 0;
+  const psRaw = sf ? (sf.newEntry - p) * sf.totalCoins : 0;
+  const psNet = sf ? psRaw - sf.fee : 0;
+  const total = plNet + psNet;
+  const rorL = lf ? plNet / (lf.totalKl/leverage) * 100 : 0;
+  const rorS = sf ? psNet / (sf.totalKl/leverage) * 100 : 0;
+  const dw = balance + total;
+
+  // PnL Long
+  const elPL = document.getElementById('ls-pnl-long');
+  if (lf) {
+    elPL.className = 'ls-val ' + (plNet>=0?'g':'r');
+    elPL.textContent = fmt(plNet) + ' U';
+    document.getElementById('ls-ror-long').textContent = fmt(rorL,1) + '%';
+  } else {
+    elPL.className='ls-val muted'; elPL.textContent='—';
+    document.getElementById('ls-ror-long').textContent='';
+  }
+
+  // PnL Short
+  const elPS = document.getElementById('ls-pnl-short');
+  if (sf) {
+    elPS.className = 'ls-val ' + (psNet>=0?'g':'r');
+    elPS.textContent = fmt(psNet) + ' U';
+    document.getElementById('ls-ror-short').textContent = fmt(rorS,1) + '%';
+  } else {
+    elPS.className='ls-val muted'; elPS.textContent='—';
+    document.getElementById('ls-ror-short').textContent='';
+  }
+
+  // Total PnL
+  const elPT = document.getElementById('ls-pnl-total');
+  if (lf || sf) {
+    elPT.className = 'ls-val ' + (total>=0?'g':'r');
+    elPT.textContent = fmt(total) + ' U';
+    const elDw = document.getElementById('ls-dw');
+    elDw.textContent = 'Dư ví: ' + fmt(dw) + ' U';
+    elDw.style.color = dw>=0 ? 'var(--green)' : 'var(--red)';
+  } else {
+    elPT.className='ls-val muted'; elPT.textContent='—';
+    document.getElementById('ls-dw').textContent='';
+  }
+
+  // Drop range: from long entry1 to last long entry
+  const firstEntry = long.prices[0];
+  const lastEntry = long.prices[n_long-1];
+  const dropRange = (firstEntry - lastEntry) / firstEntry * 100;
+  const elDR = document.getElementById('ls-drop-range');
+  elDR.className = 'ls-val a';
+  elDR.textContent = '-' + dropRange.toFixed(2) + '%';
+  // % drop from entry1 to current price
+  const dropCur = (firstEntry - p) / firstEntry * 100;
+  const elDC = document.getElementById('ls-drop-cur');
+  if (dropCur > 0) {
+    elDC.textContent = 'Giá giảm ' + dropCur.toFixed(2) + '% từ L1';
+    elDC.style.color = 'var(--red)';
+  } else if (dropCur < 0) {
+    elDC.textContent = 'Giá tăng ' + Math.abs(dropCur).toFixed(2) + '% từ L1';
+    elDC.style.color = 'var(--green)';
+  } else {
+    elDC.textContent = 'Đang ở Entry 1';
+    elDC.style.color = 'var(--muted)';
+  }
+
+  // Position marker
+  const elPos = document.getElementById('ls-position');
+  const elVsE = document.getElementById('ls-vs-entry');
+
+  // Determine which zone price is in
+  let zone = '', zoneClass = 'ls-val b';
+  if (p > firstEntry) {
+    zone = 'Trên Entry L1';
+    zoneClass = 'ls-val g';
+    elVsE.textContent = '+' + ((p-firstEntry)/firstEntry*100).toFixed(2) + '% vs L1';
+    elVsE.style.color = 'var(--green)';
+  } else if (lf && p <= lf.liq) {
+    zone = '⚠ Liq Zone';
+    zoneClass = 'ls-val r';
+    elVsE.textContent = 'Bị thanh lý!';
+    elVsE.style.color = 'var(--red)';
+  } else {
+    // Find which DCA level price is at
+    let level = n_long;
+    for (let i=0; i<n_long; i++) {
+      if (p >= long.prices[i]) { level = i; break; }
+    }
+    if (level === 0) {
+      zone = 'Entry 1 Long';
+      zoneClass = 'ls-val b';
+    } else if (level < n_long) {
+      zone = 'DCA L' + (level) + '→L' + (level+1);
+      zoneClass = 'ls-val a';
+    } else {
+      zone = 'Dưới L' + n_long;
+      zoneClass = 'ls-val r';
+    }
+    if (lf) {
+      const vsNewEntry = (p - lf.newEntry) / lf.newEntry * 100;
+      elVsE.textContent = fmt(vsNewEntry,2) + '% vs new entry';
+      elVsE.style.color = vsNewEntry>=0 ? 'var(--green)' : 'var(--red)';
+    } else {
+      elVsE.textContent = '';
+    }
+  }
+  elPos.className = zoneClass;
+  elPos.textContent = zone;
+
+  // Progress bar: maps price range [lastEntry, firstEntry] with liq below
+  document.getElementById('live-progress').style.display = 'block';
+  const pgLeft = lf ? Math.min(lf.liq * 0.95, lastEntry * 0.95) : lastEntry * 0.9;
+  const pgRight = firstEntry * 1.05;
+  const pct = Math.max(0, Math.min(100, (p - pgLeft) / (pgRight - pgLeft) * 100));
+  const liqPct = lf ? Math.max(0, Math.min(100, (lf.liq - pgLeft) / (pgRight - pgLeft) * 100)) : -1;
+
+  document.getElementById('pg-left').textContent = pgLeft.toFixed(4);
+  document.getElementById('pg-right').textContent = pgRight.toFixed(4);
+  document.getElementById('pg-center').textContent = lf ? 'Liq: ' + lf.liq.toFixed(4) : '';
+
+  const fill = document.getElementById('pg-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-bar-fill' + (pct < 30 ? ' danger' : '');
+
+  const marker = document.getElementById('pg-marker');
+  marker.style.left = pct + '%';
+  marker.style.background = total >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const liqM = document.getElementById('pg-liq');
+  if (liqPct >= 0) {
+    liqM.style.display = 'block';
+    liqM.style.left = liqPct + '%';
+  } else {
+    liqM.style.display = 'none';
+  }
+}
+
 function calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
   const series = Array.from({length:n},(_,i)=>Math.pow(size_mult,i));
   const sumS = series.reduce((a,b)=>a+b,0);
@@ -221,12 +455,30 @@ function calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
   return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
 }
 
+function calcShortDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct, longSize1) {
+  // Short 1 = 1/2 * Long size1; Short k = 2^(k-1) * Short1
+  const feeRate = parseFloat(document.getElementById('fee_rate').value) / 100;
+  const shortBase = longSize1 / 2; // Short 1 size = half of Long 1 size
+  const prices=[], sizes=[], kls=[], coins=[];
+  for (let i=0;i<n;i++) {
+    const p = e1 * (1+offset_pct/100) * Math.pow(1+pct_drop/100, i);
+    const s = shortBase * Math.pow(2, i); // double each step
+    const kl = s * leverage;
+    prices.push(p); sizes.push(s); kls.push(kl); coins.push(kl/p);
+  }
+  const totalKl=kls.reduce((a,b)=>a+b,0), totalCoins=coins.reduce((a,b)=>a+b,0);
+  const newEntry=totalKl/totalCoins;
+  // For short, liq is above newEntry
+  const liq = newEntry + budget/totalCoins;
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+}
+
 function getFilledSummary() {
   if (!state) return {lf:null,sf:null,liLong:[],liShort:[]};
   const {long,short,n_long,n_short,budget,leverage} = state;
   const feeRate = long.feeRate;
 
-  function agg(src, indices) {
+  function aggLong(src, indices) {
     if (!indices.length) return null;
     const totalKl = indices.reduce((a,i)=>a+src.kls[i],0);
     const totalCoins = indices.reduce((a,i)=>a+src.coins[i],0);
@@ -235,9 +487,18 @@ function getFilledSummary() {
     return {totalKl, totalCoins, newEntry, liq, fee: totalKl*feeRate, indices};
   }
 
+  function aggShort(src, indices) {
+    if (!indices.length) return null;
+    const totalKl = indices.reduce((a,i)=>a+src.kls[i],0);
+    const totalCoins = indices.reduce((a,i)=>a+src.coins[i],0);
+    const newEntry = totalKl/totalCoins;
+    const liq = newEntry + budget/totalCoins; // short liq is above entry
+    return {totalKl, totalCoins, newEntry, liq, fee: totalKl*feeRate, indices};
+  }
+
   const liLong = Array.from({length:n_long},(_,i)=>i).filter(i=>filled[i]);
   const liShort = Array.from({length:n_short},(_,i)=>i).filter(i=>filled[n_long+i]);
-  return {lf: agg(long,liLong), sf: agg(short,liShort), liLong, liShort};
+  return {lf: aggLong(long,liLong), sf: aggShort(short,liShort), liLong, liShort};
 }
 
 function calculate() {
@@ -253,12 +514,15 @@ function calculate() {
   const size_mult = +document.getElementById('size_mult').value;
 
   const long = calcDCA(e1,n_long,leverage,budget,pct_drop,size_mult,0);
-  const short = calcDCA(e1,n_short,leverage,budget,pct_drop,size_mult,short_offset);
+  const short = calcShortDCA(e1,n_short,leverage,budget,pct_drop,size_mult,short_offset,long.sizes[0]);
   state = {coin,balance,budget,leverage,e1,pct_drop,n_long,n_short,long,short,size_mult};
   filled = new Array(n_long+n_short).fill(true);
 
   document.getElementById('results').style.display='block';
   document.getElementById('sim-price').value = e1;
+  document.getElementById('live-coin-tag').textContent = (coin||'USDT').replace(/USDT$/,'') + '/USDT';
+  // Re-trigger live price if already filled
+  onLivePrice();
   renderTable();
   updateStats();
   drawChart();
@@ -352,7 +616,7 @@ function renderTable() {
 
 function toggleFill(idx) {
   filled[idx] = !filled[idx];
-  renderTable(); updateStats();
+  renderTable(); updateStats(); onLivePrice();
   if (document.getElementById('tab-chart').classList.contains('active')) drawChart();
   if (document.getElementById('sim-result').innerHTML.trim()!=='') simulate();
 }
@@ -362,7 +626,7 @@ function selectNone()      { filled=new Array(state.n_long+state.n_short).fill(f
 function selectLongOnly()  { filled=filled.map((_,i)=>i<state.n_long);                afterSelect(); }
 function selectShortOnly() { filled=filled.map((_,i)=>i>=state.n_long);               afterSelect(); }
 function afterSelect() {
-  renderTable(); updateStats();
+  renderTable(); updateStats(); onLivePrice();
   if (document.getElementById('tab-chart').classList.contains('active')) drawChart();
   if (document.getElementById('sim-result').innerHTML.trim()!=='') simulate();
 }
