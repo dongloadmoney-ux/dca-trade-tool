@@ -188,7 +188,7 @@
           <div class="field"><label>Số DCA Short</label><input type="number" id="n_short" value="4" min="1" max="10"></div>
         </div>
         <div class="row2">
-          <div class="field"><label>Short offset (%)</label><input type="number" id="short_offset" value="2.5" step="0.1" min="0"></div>
+          <div class="field"><label>Short offset ↓ (%)</label><input type="number" id="short_offset" value="2.5" step="0.1" min="0"></div>
           <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="fee_rate" value="0.04" step="0.01" min="0"></div>
         </div>
         <button class="btn-run" onclick="calculate()">▶ TÍNH TOÁN</button>
@@ -456,19 +456,21 @@ function calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
 }
 
 function calcShortDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct, longSize1) {
-  // Short 1 = 1/2 * Long size1; Short k = 2^(k-1) * Short1
+  // Giống logic Python: Short vào lệnh khi giá GIẢM (cùng chiều Long DCA)
+  // Short 1 = 1/2 * Long size1; Short k = Short1 * 2^(k-1) (gấp đôi mỗi bước)
+  // Giá Short i = e1 * (1 - offset_pct/100) * (1 - pct_drop/100)^i  ← giảm dần
   const feeRate = parseFloat(document.getElementById('fee_rate').value) / 100;
-  const shortBase = longSize1 / 2; // Short 1 size = half of Long 1 size
+  const shortBase = longSize1 / 2; // Short 1 margin = nửa Long 1
   const prices=[], sizes=[], kls=[], coins=[];
   for (let i=0;i<n;i++) {
-    const p = e1 * (1+offset_pct/100) * Math.pow(1+pct_drop/100, i);
-    const s = shortBase * Math.pow(2, i); // double each step
+    const p = e1 * (1 - offset_pct/100) * Math.pow(1 - pct_drop/100, i);
+    const s = shortBase * Math.pow(2, i); // gấp đôi mỗi bước
     const kl = s * leverage;
     prices.push(p); sizes.push(s); kls.push(kl); coins.push(kl/p);
   }
   const totalKl=kls.reduce((a,b)=>a+b,0), totalCoins=coins.reduce((a,b)=>a+b,0);
   const newEntry=totalKl/totalCoins;
-  // For short, liq is above newEntry
+  // Short liq = newEntry + budget/totalCoins (phía trên new entry)
   const liq = newEntry + budget/totalCoins;
   return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
 }
