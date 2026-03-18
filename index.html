@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DCA Trade Simulator</title>
+<title>Trade DCA Binance Future</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,432 +17,444 @@
     --font-mono: 'JetBrains Mono', monospace; --font-display: 'Syne', sans-serif;
   }
   body { background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
-  .app { padding: 24px; max-width: 1180px; margin: 0 auto; }
-  .header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-  .header h1 { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
-  .header .sub { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
-  .badge { font-size: 10px; padding: 2px 8px; border-radius: 3px; background: var(--green2); color: var(--green); border: 1px solid rgba(0,229,160,0.2); font-weight: 600; letter-spacing: 0.05em; }
+
+  /* ── APP SHELL ── */
+  .app { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── TOP HEADER ── */
+  .app-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 0; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .app-header h1 { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; }
+  .badge-futures { background: var(--green2); color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
+
+  /* ── MAIN MODE TABS (Long / Short) ── */
+  .mode-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid var(--border); }
+  .mode-tab {
+    padding: 12px 32px; font-family: var(--font-display); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+    border: none; background: transparent; color: var(--muted);
+    border-bottom: 3px solid transparent; transition: all 0.18s; margin-bottom: -1px;
+  }
+  .mode-tab:hover { color: var(--text); }
+  .mode-tab.long.active  { color: var(--green); border-bottom-color: var(--green); background: rgba(0,229,160,0.04); }
+  .mode-tab.short.active { color: var(--red);   border-bottom-color: var(--red);   background: rgba(255,77,106,0.04); }
+  .mode-tab.long:hover:not(.active)  { background: rgba(0,229,160,0.03); }
+  .mode-tab.short:hover:not(.active) { background: rgba(255,77,106,0.03); }
+  .mode-badge { font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+  .mode-badge.l { background: var(--green2); color: var(--green); }
+  .mode-badge.s { background: var(--red2);   color: var(--red); }
+
+  /* ── TAB PANES ── */
+  .mode-pane { display: none; padding-top: 20px; }
+  .mode-pane.active { display: block; }
+
+  /* ── SHARED INNER STYLES ── */
   .grid2 { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
   .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
   .panel-title { font-family: var(--font-display); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 14px; }
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; color: var(--muted2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
   .field input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 5px; color: var(--text); font-family: var(--font-mono); font-size: 13px; font-weight: 500; padding: 7px 10px; outline: none; transition: border-color 0.2s; }
-  .field input:focus { border-color: var(--blue); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .btn-run { width: 100%; margin-top: 16px; padding: 11px; background: var(--green); color: #000; border: none; border-radius: 5px; font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: 0.05em; cursor: pointer; transition: opacity 0.2s; }
-  .btn-run:hover { opacity: 0.85; }
-  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
-  .stat { background: var(--surface2); border-radius: 6px; padding: 10px 12px; border: 1px solid var(--border); }
-  .stat .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-  .stat .val { font-size: 17px; font-weight: 600; }
-  .stat .val.g { color: var(--green); } .stat .val.r { color: var(--red); }
-  .stat .val.b { color: var(--blue); } .stat .val.a { color: var(--amber); }
-  .stat .sub-val { font-size: 10px; color: var(--muted); margin-top: 2px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
-  .tab { padding: 5px 14px; border-radius: 5px; border: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.05em; text-transform: uppercase; background: transparent; }
-  .tab.active { background: var(--blue2); color: var(--blue); border-color: rgba(77,159,255,0.3); }
-  .tab:hover:not(.active) { border-color: var(--border2); color: var(--text); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
 
-  /* Toolbar */
-  .table-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-  .toolbar-label { font-size: 11px; color: var(--muted2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .btn-tb { padding: 4px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); transition: all 0.15s; }
-  .btn-tb:hover { background: rgba(255,255,255,0.06); }
-  .btn-tb.all { border-color: rgba(0,229,160,0.35); color: var(--green); background: var(--green3); }
-  .btn-tb.all:hover { background: rgba(0,229,160,0.14); }
-  .btn-tb.none { border-color: rgba(255,77,106,0.35); color: var(--red); background: var(--red3); }
-  .btn-tb.none:hover { background: rgba(255,77,106,0.14); }
-  .btn-tb.long-only { border-color: rgba(0,229,160,0.2); color: var(--green); background: transparent; }
-  .btn-tb.long-only:hover { background: var(--green3); }
-  .btn-tb.short-only { border-color: rgba(255,77,106,0.2); color: var(--red); background: transparent; }
-  .btn-tb.short-only:hover { background: var(--red3); }
-  .fill-count { margin-left: auto; font-size: 11px; color: var(--muted); }
-  .fill-count span { color: var(--amber); font-weight: 600; }
+  .btn-run-long  { width:100%; margin-top:16px; padding:11px; background:var(--green); color:#000; border:none; border-radius:5px; font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:0.05em; cursor:pointer; transition:opacity 0.2s; }
+  .btn-run-long:hover { opacity:0.85; }
+  .btn-run-short { width:100%; margin-top:16px; padding:11px; background:var(--red); color:#fff; border:none; border-radius:5px; font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:0.05em; cursor:pointer; transition:opacity 0.2s; }
+  .btn-run-short:hover { opacity:0.85; }
 
-  /* Table */
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border); }
-  th:first-child { text-align: center; width: 44px; }
-  th:nth-child(2) { text-align: left; }
-  td { padding: 7px 10px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.03); font-weight: 500; transition: background 0.12s; }
-  td:first-child { text-align: center; width: 44px; padding: 7px 6px; }
-  td:nth-child(2) { text-align: left; }
-  tr:hover td { background: rgba(255,255,255,0.025); }
-  tr.row-filled-long td:nth-child(2) { color: var(--green); }
-  tr.row-filled-short td:nth-child(2) { color: var(--red); }
-  tr.row-unfilled { opacity: 0.35; }
-  tr.row-unfilled td:first-child { opacity: 1 !important; }
-  tr.row-unfilled:hover { opacity: 0.55; }
-  tr.row-total td { background: rgba(255,255,255,0.025); font-weight: 700; border-top: 1px solid var(--border); }
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  .stat { background:var(--surface2); border-radius:6px; padding:10px 12px; border:1px solid var(--border); }
+  .stat .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+  .stat .val { font-size:17px; font-weight:600; }
+  .stat .val.g { color:var(--green); } .stat .val.r { color:var(--red); }
+  .stat .val.b { color:var(--blue); } .stat .val.a { color:var(--amber); }
+  .stat .sub-val { font-size:10px; color:var(--muted); margin-top:2px; }
 
-  /* Custom checkbox */
-  .chk { display: flex; align-items: center; justify-content: center; }
-  .chk-box {
-    width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid var(--border2);
-    background: var(--surface2); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s; user-select: none;
+  /* inner tabs */
+  .tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab  { padding:5px 14px; border-radius:5px; border:1px solid var(--border); font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.15s; letter-spacing:0.05em; text-transform:uppercase; background:transparent; }
+  .tab.active { background:var(--blue2); color:var(--blue); border-color:rgba(77,159,255,0.3); }
+  .tab:hover:not(.active) { border-color:var(--border2); color:var(--text); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* toolbar */
+  .table-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .toolbar-label { font-size:11px; color:var(--muted2); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+  .btn-tb { padding:4px 12px; border-radius:4px; font-family:var(--font-mono); font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border2); background:var(--surface2); color:var(--text); transition:all 0.15s; }
+  .btn-tb:hover { background:rgba(255,255,255,0.06); }
+  .btn-tb.all   { border-color:rgba(0,229,160,0.35); color:var(--green); background:var(--green3); }
+  .btn-tb.all:hover { background:rgba(0,229,160,0.14); }
+  .btn-tb.none  { border-color:rgba(255,77,106,0.35); color:var(--red); background:var(--red3); }
+  .btn-tb.none:hover { background:rgba(255,77,106,0.14); }
+  .btn-tb.long-only  { border-color:rgba(0,229,160,0.2); color:var(--green); background:transparent; }
+  .btn-tb.long-only:hover  { background:var(--green3); }
+  .btn-tb.short-only { border-color:rgba(255,77,106,0.2); color:var(--red); background:transparent; }
+  .btn-tb.short-only:hover { background:var(--red3); }
+  .fill-count { margin-left:auto; font-size:11px; color:var(--muted); }
+  .fill-count span { color:var(--amber); font-weight:600; }
+
+  /* table */
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; padding:6px 10px; text-align:right; border-bottom:1px solid var(--border); }
+  th:first-child { text-align:center; width:44px; }
+  th:nth-child(2) { text-align:left; }
+  td { padding:7px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.03); font-weight:500; transition:background 0.12s; }
+  td:first-child { text-align:center; width:44px; padding:7px 6px; }
+  td:nth-child(2) { text-align:left; }
+  tr:hover td { background:rgba(255,255,255,0.025); }
+  tr.row-filled-long  td:nth-child(2) { color:var(--green); }
+  tr.row-filled-short td:nth-child(2) { color:var(--red); }
+  tr.row-unfilled { opacity:0.35; }
+  tr.row-unfilled td:first-child { opacity:1 !important; }
+  tr.row-unfilled:hover { opacity:0.55; }
+  tr.row-total td { background:rgba(255,255,255,0.025); font-weight:700; border-top:1px solid var(--border); }
+
+  /* checkbox */
+  .chk { display:flex; align-items:center; justify-content:center; }
+  .chk-box { width:17px; height:17px; border-radius:4px; border:1.5px solid var(--border2); background:var(--surface2); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; user-select:none; }
+  .chk-box:hover { border-color:rgba(255,255,255,0.35); transform:scale(1.08); }
+  .chk-box.on-long  { background:var(--green2); border-color:var(--green); }
+  .chk-box.on-short { background:var(--red2);   border-color:var(--red); }
+  .chk-box svg { display:none; pointer-events:none; }
+  .chk-box.on-long svg, .chk-box.on-short svg { display:block; }
+
+  .tag { display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:700; letter-spacing:0.05em; vertical-align:middle; margin-left:4px; }
+  .tag-l { background:var(--green2); color:var(--green); }
+  .tag-s { background:var(--red2);   color:var(--red); }
+
+  .chart-wrap { position:relative; height:250px; margin-top:4px; }
+  .sim-controls { display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+  .sim-controls label { font-size:11px; color:var(--muted2); }
+  .sim-controls input { width:130px; background:var(--surface2); border:1px solid var(--border2); border-radius:4px; color:var(--text); font-family:var(--font-mono); font-size:12px; padding:6px 8px; outline:none; }
+  .btn-sim { padding:6px 16px; background:var(--blue2); color:var(--blue); border:1px solid rgba(77,159,255,0.25); border-radius:4px; font-family:var(--font-mono); font-size:12px; font-weight:600; cursor:pointer; }
+  .btn-sim:hover { background:rgba(77,159,255,0.18); }
+
+  .result-box { background:var(--surface2); border-radius:6px; padding:12px 14px; border:1px solid var(--border); margin-top:10px; }
+  .result-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .result-row:last-child { border-bottom:none; }
+  .result-row .k { font-size:11px; color:var(--muted2); }
+  .result-row .v { font-weight:600; font-size:13px; }
+  .v.g { color:var(--green); } .v.r { color:var(--red); } .v.b { color:var(--blue); } .v.a { color:var(--amber); }
+  .warn { font-size:11px; padding:8px 12px; border-radius:4px; background:rgba(255,184,48,0.08); border:1px solid rgba(255,184,48,0.2); color:var(--amber); margin-top:8px; }
+  .liq-warn { background:rgba(255,77,106,0.08)!important; border-color:rgba(255,77,106,0.2)!important; color:var(--red)!important; }
+  .sep { height:1px; background:var(--border); margin:8px 0; }
+  .empty-msg { text-align:center; padding:32px 16px; color:var(--muted); font-size:12px; line-height:2; }
+
+  /* live panel */
+  .live-panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
+  .live-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .live-label { font-size:11px; color:var(--muted2); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .live-input-wrap { display:flex; align-items:center; gap:8px; flex:1; }
+  .live-input-long {
+    flex:1; background:var(--surface2); border:1.5px solid rgba(77,159,255,0.35); border-radius:5px;
+    color:var(--blue); font-family:var(--font-mono); font-size:16px; font-weight:700;
+    padding:7px 12px; outline:none; transition:border-color 0.2s; min-width:0;
   }
-  .chk-box:hover { border-color: rgba(255,255,255,0.35); transform: scale(1.08); }
-  .chk-box.on-long { background: var(--green2); border-color: var(--green); }
-  .chk-box.on-short { background: var(--red2); border-color: var(--red); }
-  .chk-box svg { display: none; pointer-events: none; }
-  .chk-box.on-long svg, .chk-box.on-short svg { display: block; }
-
-  .tag { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 700; letter-spacing: 0.05em; vertical-align: middle; margin-left: 4px; }
-  .tag-l { background: var(--green2); color: var(--green); }
-  .tag-s { background: var(--red2); color: var(--red); }
-  .chart-wrap { position: relative; height: 250px; margin-top: 4px; }
-  .sim-controls { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-  .sim-controls label { font-size: 11px; color: var(--muted2); }
-  .sim-controls input { width: 130px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 12px; padding: 6px 8px; outline: none; }
-  .sim-controls input:focus { border-color: var(--blue); }
-  .btn-sim { padding: 6px 16px; background: var(--blue2); color: var(--blue); border: 1px solid rgba(77,159,255,0.25); border-radius: 4px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; cursor: pointer; }
-  .btn-sim:hover { background: rgba(77,159,255,0.18); }
-  .result-box { background: var(--surface2); border-radius: 6px; padding: 12px 14px; border: 1px solid var(--border); margin-top: 10px; }
-  .result-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-  .result-row:last-child { border-bottom: none; }
-  .result-row .k { font-size: 11px; color: var(--muted2); }
-  .result-row .v { font-weight: 600; font-size: 13px; }
-  .v.g { color: var(--green); } .v.r { color: var(--red); } .v.b { color: var(--blue); } .v.a { color: var(--amber); }
-  .warn { font-size: 11px; padding: 8px 12px; border-radius: 4px; background: rgba(255,184,48,0.08); border: 1px solid rgba(255,184,48,0.2); color: var(--amber); margin-top: 8px; }
-  .liq-warn { background: rgba(255,77,106,0.08) !important; border-color: rgba(255,77,106,0.2) !important; color: var(--red) !important; }
-  .sep { height: 1px; background: var(--border); margin: 8px 0; }
-  .empty-msg { text-align: center; padding: 32px 16px; color: var(--muted); font-size: 12px; line-height: 2; }
-
-  /* Live price panel */
-  .live-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
-  .live-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-  .live-label { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
-  .live-input-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
-  .live-input {
-    flex: 1; background: var(--surface2); border: 1.5px solid rgba(77,159,255,0.35); border-radius: 5px;
-    color: var(--blue); font-family: var(--font-mono); font-size: 16px; font-weight: 700;
-    padding: 7px 12px; outline: none; transition: border-color 0.2s; min-width: 0;
+  .live-input-long:focus { border-color:var(--blue); box-shadow:0 0 0 2px rgba(77,159,255,0.1); }
+  .live-input-short {
+    flex:1; background:var(--surface2); border:1.5px solid rgba(255,77,106,0.35); border-radius:5px;
+    color:var(--red); font-family:var(--font-mono); font-size:16px; font-weight:700;
+    padding:7px 12px; outline:none; transition:border-color 0.2s; min-width:0;
   }
-  .live-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(77,159,255,0.1); }
-  .live-input::placeholder { color: var(--muted); font-weight: 400; font-size: 13px; }
-  .live-coin-tag { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .live-input-short:focus { border-color:var(--red); box-shadow:0 0 0 2px rgba(255,77,106,0.1); }
+  .live-input-long::placeholder, .live-input-short::placeholder { color:var(--muted); font-weight:400; font-size:13px; }
+  .live-coin-tag { font-size:11px; color:var(--muted); white-space:nowrap; }
 
-  .live-progress { margin-bottom: 10px; }
-  .progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 5px; }
-  .progress-bar-wrap { position: relative; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: visible; }
-  .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; background: linear-gradient(90deg, var(--green), var(--amber)); }
-  .progress-bar-fill.danger { background: linear-gradient(90deg, var(--amber), var(--red)); }
-  .progress-marker {
-    position: absolute; top: 50%; transform: translate(-50%, -50%);
-    width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--bg);
-    transition: left 0.3s ease;
-  }
+  .live-progress { margin-bottom:10px; }
+  .progress-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-bottom:5px; }
+  .progress-bar-wrap { position:relative; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:visible; }
+  .progress-bar-fill { height:100%; border-radius:3px; transition:width 0.3s ease; background:linear-gradient(90deg,var(--green),var(--amber)); }
+  .progress-bar-fill.danger { background:linear-gradient(90deg,var(--amber),var(--red)); }
+  .progress-marker { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg); transition:left 0.3s ease; }
 
-  .live-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-  .live-stat { background: var(--surface2); border-radius: 5px; padding: 8px 10px; border: 1px solid var(--border); }
-  .live-stat .ls-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
-  .live-stat .ls-val { font-size: 13px; font-weight: 700; }
-  .live-stat .ls-val.g { color: var(--green); }
-  .live-stat .ls-val.r { color: var(--red); }
-  .live-stat .ls-val.b { color: var(--blue); }
-  .live-stat .ls-val.a { color: var(--amber); }
-  .live-stat .ls-val.muted { color: var(--muted2); }
-  .live-stat .ls-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .live-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .live-stat { background:var(--surface2); border-radius:5px; padding:8px 10px; border:1px solid var(--border); }
+  .live-stat .ls-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px; }
+  .live-stat .ls-val { font-size:13px; font-weight:700; }
+  .live-stat .ls-val.g { color:var(--green); } .live-stat .ls-val.r { color:var(--red); }
+  .live-stat .ls-val.b { color:var(--blue); }  .live-stat .ls-val.a { color:var(--amber); }
+  .live-stat .ls-val.muted { color:var(--muted2); }
+  .live-stat .ls-sub { font-size:9px; color:var(--muted); margin-top:2px; }
 
-  .pnl-highlight { border-color: rgba(0,229,160,0.25) !important; }
-  .pnl-highlight-red { border-color: rgba(255,77,106,0.25) !important; }
-
-  @media (max-width: 820px) {
-    .grid2 { grid-template-columns: 1fr; }
-    .stat-grid { grid-template-columns: repeat(2,1fr); }
-    .live-stats { grid-template-columns: repeat(3,1fr); }
+  @media (max-width:820px) {
+    .grid2 { grid-template-columns:1fr; }
+    .stat-grid { grid-template-columns:repeat(2,1fr); }
+    .live-stats { grid-template-columns:repeat(3,1fr); }
+    .mode-tab { padding:10px 18px; font-size:12px; }
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header">
-    <h1>DCA TRADE SIMULATOR</h1>
-    <span class="badge">FUTURES</span>
-    <span class="sub">Tick lệnh khớp → tính lãi/lỗ thực tế</span>
+
+  <!-- ══════════════════ APP HEADER ══════════════════ -->
+  <div class="app-header">
+    <h1>TRADE DCA BINANCE FUTURE</h1>
+    <span class="badge badge-futures">FUTURES</span>
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Tick lệnh khớp → tính lãi/lỗ thực tế</span>
   </div>
 
-  <div class="grid2">
-    <div>
-      <div class="panel">
-        <div class="panel-title">Thông số chiến lược</div>
-        <div class="field"><label>Coin / Symbol</label><input type="text" id="coin" value="TRBUSDT"></div>
-        <div class="row2">
-          <div class="field"><label>Balance (USDT)</label><input type="number" id="balance" value="300" min="1"></div>
-          <div class="field"><label>Budget (USDT)</label><input type="number" id="budget" value="100" min="1"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="leverage" value="15" min="1" max="125"></div>
-          <div class="field"><label>Entry 1 Long</label><input type="number" id="entry1" value="22" step="0.0001"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>% Giảm / bước</label><input type="number" id="pct_drop" value="5" step="0.1" min="0.1"></div>
-          <div class="field"><label>Nhân size / bước</label><input type="number" id="size_mult" value="2" step="0.5" min="1"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Số DCA Long</label><input type="number" id="n_long" value="5" min="1" max="10"></div>
-          <div class="field"><label>Số DCA Short</label><input type="number" id="n_short" value="4" min="1" max="10"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Short offset ↓ (%)</label><input type="number" id="short_offset" value="2.5" step="0.1" min="0"></div>
-          <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="fee_rate" value="0.04" step="0.01" min="0"></div>
-        </div>
-        <button class="btn-run" onclick="calculate()">▶ TÍNH TOÁN</button>
-      </div>
-    </div>
+  <!-- ══════════════════ MODE TABS ══════════════════ -->
+  <div class="mode-tabs">
+    <button class="mode-tab long active" onclick="switchMode('long')">
+      📈 DCA LONG
+      <span class="mode-badge l">LONG</span>
+    </button>
+    <button class="mode-tab short" onclick="switchMode('short')">
+      📉 DCA SHORT
+      <span class="mode-badge s">SHORT</span>
+    </button>
+  </div>
 
-    <div id="results" style="display:none;">
-      <div class="stat-grid" id="stat-row"></div>
-
-      <!-- LIVE PRICE PANEL -->
-      <div class="live-panel" id="live-panel">
-        <div class="live-top">
-          <span class="live-label">Giá hiện tại</span>
-          <div class="live-input-wrap">
-            <input class="live-input" type="number" id="live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="onLivePrice()">
-            <span class="live-coin-tag" id="live-coin-tag">USDT</span>
+  <!-- ══════════════════ LONG PANE ══════════════════ -->
+  <div class="mode-pane active" id="pane-long">
+    <div class="grid2">
+      <div>
+        <div class="panel">
+          <div class="panel-title">Thông số chiến lược — DCA Long</div>
+          <div class="field"><label>Coin / Symbol</label><input type="text" id="L_coin" value="TRBUSDT"></div>
+          <div class="row2">
+            <div class="field"><label>Balance (USDT)</label><input type="number" id="L_balance" value="300" min="1"></div>
+            <div class="field"><label>Budget (USDT)</label><input type="number" id="L_budget" value="100" min="1"></div>
           </div>
-        </div>
-
-        <!-- Progress bar: from entry1 → last long entry, with liq marker -->
-        <div class="live-progress" id="live-progress" style="display:none;">
-          <div class="progress-labels">
-            <span id="pg-left"></span>
-            <span id="pg-center" style="color:var(--amber)"></span>
-            <span id="pg-right"></span>
+          <div class="row2">
+            <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="L_leverage" value="15" min="1" max="125"></div>
+            <div class="field"><label>Entry 1 Long</label><input type="number" id="L_entry1" value="22" step="0.0001"></div>
           </div>
-          <div class="progress-bar-wrap" id="pg-wrap">
-            <div class="progress-bar-fill" id="pg-fill" style="width:0%"></div>
-            <div class="progress-marker" id="pg-marker" style="left:0%;background:var(--blue)"></div>
-            <div class="progress-marker" id="pg-liq" style="left:0%;background:var(--red);display:none"></div>
+          <div class="row2">
+            <div class="field"><label>% Giảm / bước</label><input type="number" id="L_pct_drop" value="5" step="0.1" min="0.1"></div>
+            <div class="field"><label>Nhân size / bước</label><input type="number" id="L_size_mult" value="2" step="0.5" min="1"></div>
           </div>
-        </div>
-
-        <div class="live-stats" id="live-stats">
-          <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="ls-pnl-long">—</div><div class="ls-sub" id="ls-ror-long"></div></div>
-          <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="ls-pnl-short">—</div><div class="ls-sub" id="ls-ror-short"></div></div>
-          <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="ls-pnl-total">—</div><div class="ls-sub" id="ls-dw"></div></div>
-          <div class="live-stat"><div class="ls-label">Giá giảm từ L1→Lcuối</div><div class="ls-val a" id="ls-drop-range">—</div><div class="ls-sub" id="ls-drop-cur"></div></div>
-          <div class="live-stat"><div class="ls-label">Vị trí giá</div><div class="ls-val b" id="ls-position">—</div><div class="ls-sub" id="ls-vs-entry"></div></div>
+          <div class="row2">
+            <div class="field"><label>Số DCA Long</label><input type="number" id="L_n_long" value="5" min="1" max="10"></div>
+            <div class="field"><label>Số DCA Short</label><input type="number" id="L_n_short" value="4" min="1" max="10"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Short offset ↓ (%)</label><input type="number" id="L_short_offset" value="2.5" step="0.1" min="0"></div>
+            <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="L_fee_rate" value="0.04" step="0.01" min="0"></div>
+          </div>
+          <button class="btn-run-long" onclick="L_calculate()">▶ TÍNH TOÁN LONG</button>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="tabs">
-          <button class="tab active" onclick="switchTab('entries')">Lệnh vào</button>
-          <button class="tab" onclick="switchTab('sim')">Mô phỏng giá</button>
-          <button class="tab" onclick="switchTab('chart')">Biểu đồ PnL</button>
-          <button class="tab" onclick="switchTab('risk')">Rủi ro</button>
-        </div>
+      <div id="L_results" style="display:none;">
+        <div class="stat-grid" id="L_stat-row"></div>
 
-        <div class="tab-content active" id="tab-entries">
-          <div class="table-toolbar">
-            <span class="toolbar-label">Lệnh khớp:</span>
-            <button class="btn-tb all" onclick="selectAll()">✓ Chọn tất cả</button>
-            <button class="btn-tb none" onclick="selectNone()">✕ Bỏ chọn tất cả</button>
-            <button class="btn-tb long-only" onclick="selectLongOnly()">Long only</button>
-            <button class="btn-tb short-only" onclick="selectShortOnly()">Short only</button>
-            <span class="fill-count" id="fill-count"></span>
+        <div class="live-panel">
+          <div class="live-top">
+            <span class="live-label">Giá hiện tại</span>
+            <div class="live-input-wrap">
+              <input class="live-input-long" type="number" id="L_live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="L_onLivePrice()">
+              <span class="live-coin-tag" id="L_live-coin-tag">USDT</span>
+            </div>
           </div>
-          <table id="entry-table"></table>
-        </div>
-
-        <div class="tab-content" id="tab-sim">
-          <div class="sim-controls">
-            <label>Giá exit:</label>
-            <input type="number" id="sim-price" step="0.0001" placeholder="Nhập giá...">
-            <button class="btn-sim" onclick="simulate()">Tính PnL</button>
+          <div class="live-progress" id="L_live-progress" style="display:none;">
+            <div class="progress-labels">
+              <span id="L_pg-left"></span>
+              <span id="L_pg-center" style="color:var(--amber)"></span>
+              <span id="L_pg-right"></span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="L_pg-fill" style="width:0%"></div>
+              <div class="progress-marker" id="L_pg-marker" style="left:0%;background:var(--blue)"></div>
+              <div class="progress-marker" id="L_pg-liq" style="left:0%;background:var(--red);display:none"></div>
+            </div>
           </div>
-          <div id="sim-result"></div>
+          <div class="live-stats">
+            <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="L_ls-pnl-long">—</div><div class="ls-sub" id="L_ls-ror-long"></div></div>
+            <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="L_ls-pnl-short">—</div><div class="ls-sub" id="L_ls-ror-short"></div></div>
+            <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="L_ls-pnl-total">—</div><div class="ls-sub" id="L_ls-dw"></div></div>
+            <div class="live-stat"><div class="ls-label">Giá giảm L1→Lcuối</div><div class="ls-val a" id="L_ls-drop-range">—</div><div class="ls-sub" id="L_ls-drop-cur"></div></div>
+            <div class="live-stat"><div class="ls-label">Vị trí giá</div><div class="ls-val b" id="L_ls-position">—</div><div class="ls-sub" id="L_ls-vs-entry"></div></div>
+          </div>
         </div>
 
-        <div class="tab-content" id="tab-chart">
-          <div class="chart-wrap"><canvas id="canvas-pnl"></canvas></div>
-          <div id="chart-legend" style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted2)"></div>
-        </div>
-
-        <div class="tab-content" id="tab-risk">
-          <div id="risk-content"></div>
+        <div class="panel">
+          <div class="tabs">
+            <button class="tab active" onclick="L_switchTab('entries')">Lệnh vào</button>
+            <button class="tab" onclick="L_switchTab('sim')">Mô phỏng giá</button>
+            <button class="tab" onclick="L_switchTab('chart')">Biểu đồ PnL</button>
+            <button class="tab" onclick="L_switchTab('risk')">Rủi ro</button>
+          </div>
+          <div class="tab-content active" id="L_tab-entries">
+            <div class="table-toolbar">
+              <span class="toolbar-label">Lệnh khớp:</span>
+              <button class="btn-tb all"        onclick="L_selectAll()">✓ Chọn tất cả</button>
+              <button class="btn-tb none"       onclick="L_selectNone()">✕ Bỏ chọn tất cả</button>
+              <button class="btn-tb long-only"  onclick="L_selectLongOnly()">Long only</button>
+              <button class="btn-tb short-only" onclick="L_selectShortOnly()">Short only</button>
+              <span class="fill-count" id="L_fill-count"></span>
+            </div>
+            <table id="L_entry-table"></table>
+          </div>
+          <div class="tab-content" id="L_tab-sim">
+            <div class="sim-controls">
+              <label>Giá exit:</label>
+              <input type="number" id="L_sim-price" step="0.0001" placeholder="Nhập giá...">
+              <button class="btn-sim" onclick="L_simulate()">Tính PnL</button>
+            </div>
+            <div id="L_sim-result"></div>
+          </div>
+          <div class="tab-content" id="L_tab-chart">
+            <div class="chart-wrap"><canvas id="L_canvas-pnl"></canvas></div>
+            <div id="L_chart-legend" style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted2)"></div>
+          </div>
+          <div class="tab-content" id="L_tab-risk">
+            <div id="L_risk-content"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- ══════════════════ SHORT PANE ══════════════════ -->
+  <div class="mode-pane" id="pane-short">
+    <div class="grid2">
+      <div>
+        <div class="panel">
+          <div class="panel-title">Thông số chiến lược — DCA Short</div>
+          <div class="field"><label>Coin / Symbol</label><input type="text" id="S_coin" value="BTCUSDT"></div>
+          <div class="row2">
+            <div class="field"><label>Balance (USDT)</label><input type="number" id="S_balance" value="300" min="1"></div>
+            <div class="field"><label>Budget (USDT)</label><input type="number" id="S_budget" value="100" min="1"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="S_leverage" value="15" min="1" max="125"></div>
+            <div class="field"><label>Entry 1 Short</label><input type="number" id="S_entry1" value="22" step="0.0001"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>% Tăng / bước</label><input type="number" id="S_pct_rise" value="5" step="0.1" min="0.1"></div>
+            <div class="field"><label>Nhân size / bước</label><input type="number" id="S_size_mult" value="2" step="0.5" min="1"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Số DCA Short</label><input type="number" id="S_n_short" value="5" min="1" max="10"></div>
+            <div class="field"><label>Số DCA Long</label><input type="number" id="S_n_long" value="4" min="1" max="10"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Long offset ↑ (%)</label><input type="number" id="S_long_offset" value="2.5" step="0.1" min="0"></div>
+            <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="S_fee_rate" value="0.04" step="0.01" min="0"></div>
+          </div>
+          <button class="btn-run-short" onclick="S_calculate()">▶ TÍNH TOÁN SHORT</button>
+        </div>
+      </div>
+
+      <div id="S_results" style="display:none;">
+        <div class="stat-grid" id="S_stat-row"></div>
+
+        <div class="live-panel">
+          <div class="live-top">
+            <span class="live-label">Giá hiện tại</span>
+            <div class="live-input-wrap">
+              <input class="live-input-short" type="number" id="S_live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="S_onLivePrice()">
+              <span class="live-coin-tag" id="S_live-coin-tag">USDT</span>
+            </div>
+          </div>
+          <div class="live-progress" id="S_live-progress" style="display:none;">
+            <div class="progress-labels">
+              <span id="S_pg-left"></span>
+              <span id="S_pg-center" style="color:var(--amber)"></span>
+              <span id="S_pg-right"></span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="S_pg-fill" style="width:0%"></div>
+              <div class="progress-marker" id="S_pg-marker" style="left:0%;background:var(--blue)"></div>
+              <div class="progress-marker" id="S_pg-liq" style="left:0%;background:var(--red);display:none"></div>
+            </div>
+          </div>
+          <div class="live-stats">
+            <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="S_ls-pnl-short">—</div><div class="ls-sub" id="S_ls-ror-short"></div></div>
+            <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="S_ls-pnl-long">—</div><div class="ls-sub" id="S_ls-ror-long"></div></div>
+            <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="S_ls-pnl-total">—</div><div class="ls-sub" id="S_ls-dw"></div></div>
+            <div class="live-stat"><div class="ls-label">Giá tăng S1→Scuối</div><div class="ls-val a" id="S_ls-rise-range">—</div><div class="ls-sub" id="S_ls-rise-cur"></div></div>
+            <div class="live-stat"><div class="ls-label">Vị trí giá</div><div class="ls-val b" id="S_ls-position">—</div><div class="ls-sub" id="S_ls-vs-entry"></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="tabs">
+            <button class="tab active" onclick="S_switchTab('entries')">Lệnh vào</button>
+            <button class="tab" onclick="S_switchTab('sim')">Mô phỏng giá</button>
+            <button class="tab" onclick="S_switchTab('chart')">Biểu đồ PnL</button>
+            <button class="tab" onclick="S_switchTab('risk')">Rủi ro</button>
+          </div>
+          <div class="tab-content active" id="S_tab-entries">
+            <div class="table-toolbar">
+              <span class="toolbar-label">Lệnh khớp:</span>
+              <button class="btn-tb all"        onclick="S_selectAll()">✓ Chọn tất cả</button>
+              <button class="btn-tb none"       onclick="S_selectNone()">✕ Bỏ chọn tất cả</button>
+              <button class="btn-tb short-only" onclick="S_selectShortOnly()">Short only</button>
+              <button class="btn-tb long-only"  onclick="S_selectLongOnly()">Long only</button>
+              <span class="fill-count" id="S_fill-count"></span>
+            </div>
+            <table id="S_entry-table"></table>
+          </div>
+          <div class="tab-content" id="S_tab-sim">
+            <div class="sim-controls">
+              <label>Giá exit:</label>
+              <input type="number" id="S_sim-price" step="0.0001" placeholder="Nhập giá...">
+              <button class="btn-sim" onclick="S_simulate()">Tính PnL</button>
+            </div>
+            <div id="S_sim-result"></div>
+          </div>
+          <div class="tab-content" id="S_tab-chart">
+            <div class="chart-wrap"><canvas id="S_canvas-pnl"></canvas></div>
+            <div id="S_chart-legend" style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted2)"></div>
+          </div>
+          <div class="tab-content" id="S_tab-risk">
+            <div id="S_risk-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .app -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-let state = null;
-let pnlChart = null;
-let filled = []; // filled[i]: true = lệnh khớp
-
-function fmt(n, dec=2) { return (n>=0?'':'-') + Math.abs(n).toFixed(dec); }
-
-function onLivePrice() {
-  if (!state) return;
-  const p = parseFloat(document.getElementById('live-price').value);
-  const {lf,sf,liLong,liShort} = getFilledSummary();
-  const {long,short,n_long,balance,leverage,e1} = state;
-
-  // Update coin tag
-  document.getElementById('live-coin-tag').textContent = (state.coin||'USDT').replace(/USDT$/,'') + '/USDT';
-
-  if (isNaN(p) || p <= 0) {
-    ['ls-pnl-long','ls-pnl-short','ls-pnl-total','ls-drop-range','ls-position'].forEach(id => {
-      const el = document.getElementById(id);
-      el.className = 'ls-val muted'; el.textContent = '—';
-    });
-    ['ls-ror-long','ls-ror-short','ls-dw','ls-drop-cur','ls-vs-entry'].forEach(id => document.getElementById(id).textContent='');
-    document.getElementById('live-progress').style.display = 'none';
-    return;
-  }
-
-  // PnL calculations (only filled orders)
-  const plRaw = lf ? (p - lf.newEntry) * lf.totalCoins : 0;
-  const plNet = lf ? plRaw - lf.fee : 0;
-  const psRaw = sf ? (sf.newEntry - p) * sf.totalCoins : 0;
-  const psNet = sf ? psRaw - sf.fee : 0;
-  const total = plNet + psNet;
-  const rorL = lf ? plNet / (lf.totalKl/leverage) * 100 : 0;
-  const rorS = sf ? psNet / (sf.totalKl/leverage) * 100 : 0;
-  const dw = balance + total;
-
-  // PnL Long
-  const elPL = document.getElementById('ls-pnl-long');
-  if (lf) {
-    elPL.className = 'ls-val ' + (plNet>=0?'g':'r');
-    elPL.textContent = fmt(plNet) + ' U';
-    document.getElementById('ls-ror-long').textContent = fmt(rorL,1) + '%';
-  } else {
-    elPL.className='ls-val muted'; elPL.textContent='—';
-    document.getElementById('ls-ror-long').textContent='';
-  }
-
-  // PnL Short
-  const elPS = document.getElementById('ls-pnl-short');
-  if (sf) {
-    elPS.className = 'ls-val ' + (psNet>=0?'g':'r');
-    elPS.textContent = fmt(psNet) + ' U';
-    document.getElementById('ls-ror-short').textContent = fmt(rorS,1) + '%';
-  } else {
-    elPS.className='ls-val muted'; elPS.textContent='—';
-    document.getElementById('ls-ror-short').textContent='';
-  }
-
-  // Total PnL
-  const elPT = document.getElementById('ls-pnl-total');
-  if (lf || sf) {
-    elPT.className = 'ls-val ' + (total>=0?'g':'r');
-    elPT.textContent = fmt(total) + ' U';
-    const elDw = document.getElementById('ls-dw');
-    elDw.textContent = 'Dư ví: ' + fmt(dw) + ' U';
-    elDw.style.color = dw>=0 ? 'var(--green)' : 'var(--red)';
-  } else {
-    elPT.className='ls-val muted'; elPT.textContent='—';
-    document.getElementById('ls-dw').textContent='';
-  }
-
-  // Drop range: from long entry1 to last long entry
-  const firstEntry = long.prices[0];
-  const lastEntry = long.prices[n_long-1];
-  const dropRange = (firstEntry - lastEntry) / firstEntry * 100;
-  const elDR = document.getElementById('ls-drop-range');
-  elDR.className = 'ls-val a';
-  elDR.textContent = '-' + dropRange.toFixed(2) + '%';
-  // % drop from entry1 to current price
-  const dropCur = (firstEntry - p) / firstEntry * 100;
-  const elDC = document.getElementById('ls-drop-cur');
-  if (dropCur > 0) {
-    elDC.textContent = 'Giá giảm ' + dropCur.toFixed(2) + '% từ L1';
-    elDC.style.color = 'var(--red)';
-  } else if (dropCur < 0) {
-    elDC.textContent = 'Giá tăng ' + Math.abs(dropCur).toFixed(2) + '% từ L1';
-    elDC.style.color = 'var(--green)';
-  } else {
-    elDC.textContent = 'Đang ở Entry 1';
-    elDC.style.color = 'var(--muted)';
-  }
-
-  // Position marker
-  const elPos = document.getElementById('ls-position');
-  const elVsE = document.getElementById('ls-vs-entry');
-
-  // Determine which zone price is in
-  let zone = '', zoneClass = 'ls-val b';
-  if (p > firstEntry) {
-    zone = 'Trên Entry L1';
-    zoneClass = 'ls-val g';
-    elVsE.textContent = '+' + ((p-firstEntry)/firstEntry*100).toFixed(2) + '% vs L1';
-    elVsE.style.color = 'var(--green)';
-  } else if (lf && p <= lf.liq) {
-    zone = '⚠ Liq Zone';
-    zoneClass = 'ls-val r';
-    elVsE.textContent = 'Bị thanh lý!';
-    elVsE.style.color = 'var(--red)';
-  } else {
-    // Find which DCA level price is at
-    let level = n_long;
-    for (let i=0; i<n_long; i++) {
-      if (p >= long.prices[i]) { level = i; break; }
-    }
-    if (level === 0) {
-      zone = 'Entry 1 Long';
-      zoneClass = 'ls-val b';
-    } else if (level < n_long) {
-      zone = 'DCA L' + (level) + '→L' + (level+1);
-      zoneClass = 'ls-val a';
-    } else {
-      zone = 'Dưới L' + n_long;
-      zoneClass = 'ls-val r';
-    }
-    if (lf) {
-      const vsNewEntry = (p - lf.newEntry) / lf.newEntry * 100;
-      elVsE.textContent = fmt(vsNewEntry,2) + '% vs new entry';
-      elVsE.style.color = vsNewEntry>=0 ? 'var(--green)' : 'var(--red)';
-    } else {
-      elVsE.textContent = '';
-    }
-  }
-  elPos.className = zoneClass;
-  elPos.textContent = zone;
-
-  // Progress bar: maps price range [lastEntry, firstEntry] with liq below
-  document.getElementById('live-progress').style.display = 'block';
-  const pgLeft = lf ? Math.min(lf.liq * 0.95, lastEntry * 0.95) : lastEntry * 0.9;
-  const pgRight = firstEntry * 1.05;
-  const pct = Math.max(0, Math.min(100, (p - pgLeft) / (pgRight - pgLeft) * 100));
-  const liqPct = lf ? Math.max(0, Math.min(100, (lf.liq - pgLeft) / (pgRight - pgLeft) * 100)) : -1;
-
-  document.getElementById('pg-left').textContent = pgLeft.toFixed(4);
-  document.getElementById('pg-right').textContent = pgRight.toFixed(4);
-  document.getElementById('pg-center').textContent = lf ? 'Liq: ' + lf.liq.toFixed(4) : '';
-
-  const fill = document.getElementById('pg-fill');
-  fill.style.width = pct + '%';
-  fill.className = 'progress-bar-fill' + (pct < 30 ? ' danger' : '');
-
-  const marker = document.getElementById('pg-marker');
-  marker.style.left = pct + '%';
-  marker.style.background = total >= 0 ? 'var(--green)' : 'var(--red)';
-
-  const liqM = document.getElementById('pg-liq');
-  if (liqPct >= 0) {
-    liqM.style.display = 'block';
-    liqM.style.left = liqPct + '%';
-  } else {
-    liqM.style.display = 'none';
-  }
+// ══════════════════════════════════════════════════════════════
+//  MODE SWITCHER
+// ══════════════════════════════════════════════════════════════
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mode-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector('.mode-tab.' + mode).classList.add('active');
+  document.getElementById('pane-' + mode).classList.add('active');
+  // redraw chart of newly visible pane if needed
+  if (mode === 'long'  && L_state && document.getElementById('L_tab-chart').classList.contains('active')) setTimeout(L_drawChart, 50);
+  if (mode === 'short' && S_state && document.getElementById('S_tab-chart').classList.contains('active')) setTimeout(S_drawChart, 50);
 }
 
-function calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
+// ══════════════════════════════════════════════════════════════
+//  SHARED HELPER
+// ══════════════════════════════════════════════════════════════
+function fmt(n, dec=2) { return (n>=0?'':'-') + Math.abs(n).toFixed(dec); }
+
+// ══════════════════════════════════════════════════════════════
+//  ██╗      ██████╗ ███╗   ██╗ ██████╗     ████████╗ █████╗ ██████╗
+//  ██║     ██╔═══██╗████╗  ██║██╔════╝        ██╔══╝██╔══██╗██╔══██╗
+//  ██║     ██║   ██║██╔██╗ ██║██║  ███╗       ██║   ███████║██████╔╝
+//  ██║     ██║   ██║██║╚██╗██║██║   ██║       ██║   ██╔══██║██╔══██╗
+//  ███████╗╚██████╔╝██║ ╚████║╚██████╔╝       ██║   ██║  ██║██████╔╝
+//  ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝        ╚═╝   ╚═╝  ╚═╝╚═════╝
+// ══════════════════════════════════════════════════════════════
+let L_state = null;
+let L_pnlChart = null;
+let L_filled = [];
+
+function L_g(id) { return document.getElementById(id); }
+
+function L_calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
   const series = Array.from({length:n},(_,i)=>Math.pow(size_mult,i));
   const sumS = series.reduce((a,b)=>a+b,0);
   const base = budget / (2 * sumS);
   const actualBase = offset_pct === 0 ? base : base / 2;
-  const feeRate = parseFloat(document.getElementById('fee_rate').value) / 100;
+  const feeRate = parseFloat(L_g('L_fee_rate').value) / 100;
   const prices=[], sizes=[], kls=[], coins=[];
   for (let i=0;i<n;i++) {
     const p = e1 * (1-offset_pct/100) * Math.pow(1-pct_drop/100, i);
@@ -455,366 +467,454 @@ function calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
   return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
 }
 
-function calcShortDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct, longSize1) {
-  // Giống logic Python: Short vào lệnh khi giá GIẢM (cùng chiều Long DCA)
-  // Short 1 = 1/2 * Long size1; Short k = Short1 * 2^(k-1) (gấp đôi mỗi bước)
-  // Giá Short i = e1 * (1 - offset_pct/100) * (1 - pct_drop/100)^i  ← giảm dần
-  const feeRate = parseFloat(document.getElementById('fee_rate').value) / 100;
-  const shortBase = longSize1 / 2; // Short 1 margin = nửa Long 1
+function L_calcShortDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct, longSize1) {
+  const feeRate = parseFloat(L_g('L_fee_rate').value) / 100;
+  const shortBase = longSize1 / 2;
   const prices=[], sizes=[], kls=[], coins=[];
   for (let i=0;i<n;i++) {
     const p = e1 * (1 - offset_pct/100) * Math.pow(1 - pct_drop/100, i);
-    const s = shortBase * Math.pow(2, i); // gấp đôi mỗi bước
+    const s = shortBase * Math.pow(2, i);
     const kl = s * leverage;
     prices.push(p); sizes.push(s); kls.push(kl); coins.push(kl/p);
   }
   const totalKl=kls.reduce((a,b)=>a+b,0), totalCoins=coins.reduce((a,b)=>a+b,0);
   const newEntry=totalKl/totalCoins;
-  // Short liq = newEntry + budget/totalCoins (phía trên new entry)
   const liq = newEntry + budget/totalCoins;
   return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
 }
 
-function getFilledSummary() {
-  if (!state) return {lf:null,sf:null,liLong:[],liShort:[]};
-  const {long,short,n_long,n_short,budget,leverage} = state;
+function L_getFilledSummary() {
+  if (!L_state) return {lf:null,sf:null,liLong:[],liShort:[]};
+  const {long,short,n_long,n_short,budget} = L_state;
   const feeRate = long.feeRate;
-
-  function aggLong(src, indices) {
+  function aggLong(src,indices) {
     if (!indices.length) return null;
-    const totalKl = indices.reduce((a,i)=>a+src.kls[i],0);
-    const totalCoins = indices.reduce((a,i)=>a+src.coins[i],0);
-    const newEntry = totalKl/totalCoins;
-    const liq = newEntry - budget/totalCoins;
-    return {totalKl, totalCoins, newEntry, liq, fee: totalKl*feeRate, indices};
+    const totalKl=indices.reduce((a,i)=>a+src.kls[i],0), totalCoins=indices.reduce((a,i)=>a+src.coins[i],0);
+    const newEntry=totalKl/totalCoins, liq=newEntry-budget/totalCoins;
+    return {totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate};
   }
-
-  function aggShort(src, indices) {
+  function aggShort(src,indices) {
     if (!indices.length) return null;
-    const totalKl = indices.reduce((a,i)=>a+src.kls[i],0);
-    const totalCoins = indices.reduce((a,i)=>a+src.coins[i],0);
-    const newEntry = totalKl/totalCoins;
-    const liq = newEntry + budget/totalCoins; // short liq is above entry
-    return {totalKl, totalCoins, newEntry, liq, fee: totalKl*feeRate, indices};
+    const totalKl=indices.reduce((a,i)=>a+src.kls[i],0), totalCoins=indices.reduce((a,i)=>a+src.coins[i],0);
+    const newEntry=totalKl/totalCoins, liq=newEntry+budget/totalCoins;
+    return {totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate};
   }
-
-  const liLong = Array.from({length:n_long},(_,i)=>i).filter(i=>filled[i]);
-  const liShort = Array.from({length:n_short},(_,i)=>i).filter(i=>filled[n_long+i]);
-  return {lf: aggLong(long,liLong), sf: aggShort(short,liShort), liLong, liShort};
+  const liLong=Array.from({length:n_long},(_,i)=>i).filter(i=>L_filled[i]);
+  const liShort=Array.from({length:n_short},(_,i)=>i).filter(i=>L_filled[n_long+i]);
+  return {lf:aggLong(long,liLong),sf:aggShort(short,liShort),liLong,liShort};
 }
 
-function calculate() {
-  const coin = document.getElementById('coin').value||'SYMBOL';
-  const balance = +document.getElementById('balance').value;
-  const budget = +document.getElementById('budget').value;
-  const leverage = +document.getElementById('leverage').value;
-  const e1 = +document.getElementById('entry1').value;
-  const pct_drop = +document.getElementById('pct_drop').value;
-  const n_long = +document.getElementById('n_long').value;
-  const n_short = +document.getElementById('n_short').value;
-  const short_offset = +document.getElementById('short_offset').value;
-  const size_mult = +document.getElementById('size_mult').value;
-
-  const long = calcDCA(e1,n_long,leverage,budget,pct_drop,size_mult,0);
-  const short = calcShortDCA(e1,n_short,leverage,budget,pct_drop,size_mult,short_offset,long.sizes[0]);
-  state = {coin,balance,budget,leverage,e1,pct_drop,n_long,n_short,long,short,size_mult};
-  filled = new Array(n_long+n_short).fill(true);
-
-  document.getElementById('results').style.display='block';
-  document.getElementById('sim-price').value = e1;
-  document.getElementById('live-coin-tag').textContent = (coin||'USDT').replace(/USDT$/,'') + '/USDT';
-  // Re-trigger live price if already filled
-  onLivePrice();
-  renderTable();
-  updateStats();
-  drawChart();
+function L_calculate() {
+  const coin=L_g('L_coin').value||'SYMBOL', balance=+L_g('L_balance').value,
+        budget=+L_g('L_budget').value, leverage=+L_g('L_leverage').value,
+        e1=+L_g('L_entry1').value, pct_drop=+L_g('L_pct_drop').value,
+        n_long=+L_g('L_n_long').value, n_short=+L_g('L_n_short').value,
+        short_offset=+L_g('L_short_offset').value, size_mult=+L_g('L_size_mult').value;
+  const long=L_calcDCA(e1,n_long,leverage,budget,pct_drop,size_mult,0);
+  const short=L_calcShortDCA(e1,n_short,leverage,budget,pct_drop,size_mult,short_offset,long.sizes[0]);
+  L_state={coin,balance,budget,leverage,e1,pct_drop,n_long,n_short,long,short,size_mult};
+  L_filled=new Array(n_long+n_short).fill(true);
+  L_g('L_results').style.display='block';
+  L_g('L_sim-price').value=e1;
+  L_g('L_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  L_onLivePrice(); L_renderTable(); L_updateStats(); L_drawChart();
 }
 
-function renderTable() {
-  const {long,short,n_long,n_short} = state;
-  const {lf,sf,liLong,liShort} = getFilledSummary();
-
-  let h = `<tr>
-    <th title="Tick = lệnh đã khớp">Khớp</th>
-    <th>Lệnh</th><th>Giá vào</th><th>Size USDT</th>
-    <th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th>
-  </tr>`;
-
-  // Long
+function L_renderTable() {
+  const {long,short,n_long,n_short}=L_state;
+  const {lf,sf,liLong,liShort}=L_getFilledSummary();
+  let h=`<tr><th>Khớp</th><th>Lệnh</th><th>Giá vào</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr>`;
+  const tickSvg=(clr)=>`<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   let cumKl=0;
-  for (let i=0;i<n_long;i++) {
-    const idx=i, on=filled[idx];
-    if (on) cumKl+=long.kls[i];
-    const rc = on ? 'row-filled-long' : 'row-unfilled';
-    const cc = on ? 'chk-box on-long' : 'chk-box';
-    const tick = on
-      ? `<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="#00e5a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`
-      : '';
-    h += `<tr class="${rc}" id="row-${idx}">
-      <td><div class="chk"><div class="${cc}" onclick="toggleFill(${idx})" title="Click để đánh dấu khớp/bỏ khớp">${tick}</div></div></td>
-      <td>Long ${i+1} <span class="tag tag-l">L</span></td>
-      <td>${long.prices[i].toFixed(6)}</td>
-      <td>${long.sizes[i].toFixed(4)}</td>
-      <td>${long.kls[i].toFixed(4)}</td>
-      <td>${long.coins[i].toFixed(6)}</td>
-      <td>${on ? cumKl.toFixed(2) : '—'}</td>
-    </tr>`;
+  for(let i=0;i<n_long;i++){
+    const idx=i,on=L_filled[idx];
+    if(on)cumKl+=long.kls[i];
+    const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';
+    h+=`<tr class="${rc}" id="L_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="L_toggleFill(${idx})">${on?tickSvg('#00e5a0'):''}</div></div></td><td>Long ${i+1} <span class="tag tag-l">L</span></td><td>${long.prices[i].toFixed(6)}</td><td>${long.sizes[i].toFixed(4)}</td><td>${long.kls[i].toFixed(4)}</td><td>${long.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;
   }
-
-  h += `<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;
-
-  // Short
+  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;
   cumKl=0;
-  for (let i=0;i<n_short;i++) {
-    const idx=n_long+i, on=filled[idx];
-    if (on) cumKl+=short.kls[i];
-    const rc = on ? 'row-filled-short' : 'row-unfilled';
-    const cc = on ? 'chk-box on-short' : 'chk-box';
-    const tick = on
-      ? `<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="#ff4d6a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`
-      : '';
-    h += `<tr class="${rc}" id="row-${idx}">
-      <td><div class="chk"><div class="${cc}" onclick="toggleFill(${idx})" title="Click để đánh dấu khớp/bỏ khớp">${tick}</div></div></td>
-      <td>Short ${i+1} <span class="tag tag-s">S</span></td>
-      <td>${short.prices[i].toFixed(6)}</td>
-      <td>${short.sizes[i].toFixed(4)}</td>
-      <td>${short.kls[i].toFixed(4)}</td>
-      <td>${short.coins[i].toFixed(6)}</td>
-      <td>${on ? cumKl.toFixed(2) : '—'}</td>
-    </tr>`;
+  for(let i=0;i<n_short;i++){
+    const idx=n_long+i,on=L_filled[idx];
+    if(on)cumKl+=short.kls[i];
+    const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';
+    h+=`<tr class="${rc}" id="L_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="L_toggleFill(${idx})">${on?tickSvg('#ff4d6a'):''}</div></div></td><td>Short ${i+1} <span class="tag tag-s">S</span></td><td>${short.prices[i].toFixed(6)}</td><td>${short.sizes[i].toFixed(4)}</td><td>${short.kls[i].toFixed(4)}</td><td>${short.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;
   }
-
-  // Totals
-  const lSizeSum = lf ? liLong.reduce((a,i)=>a+long.sizes[i],0) : 0;
-  const sSizeSum = sf ? liShort.reduce((a,i)=>a+short.sizes[i],0) : 0;
-  h += `
-    <tr class="row-total">
-      <td></td>
-      <td style="color:var(--green)">Long (đã khớp: ${liLong.length}/${n_long})</td>
-      <td>—</td>
-      <td>${lf ? lSizeSum.toFixed(4) : '—'}</td>
-      <td>${lf ? lf.totalKl.toFixed(4) : '—'}</td>
-      <td>${lf ? lf.totalCoins.toFixed(6) : '—'}</td>
-      <td>${lf ? lf.totalKl.toFixed(2) : '—'}</td>
-    </tr>
-    <tr class="row-total">
-      <td></td>
-      <td style="color:var(--red)">Short (đã khớp: ${liShort.length}/${n_short})</td>
-      <td>—</td>
-      <td>${sf ? sSizeSum.toFixed(4) : '—'}</td>
-      <td>${sf ? sf.totalKl.toFixed(4) : '—'}</td>
-      <td>${sf ? sf.totalCoins.toFixed(6) : '—'}</td>
-      <td>${sf ? sf.totalKl.toFixed(2) : '—'}</td>
-    </tr>`;
-
-  document.getElementById('entry-table').innerHTML = h;
-
-  const totalF = filled.filter(Boolean).length;
-  const nL = filled.slice(0,n_long).filter(Boolean).length;
-  const nS = filled.slice(n_long).filter(Boolean).length;
-  document.getElementById('fill-count').innerHTML =
-    `Đã khớp: <span>${nL} Long + ${nS} Short</span> / ${n_long+n_short} lệnh`;
+  const lSz=lf?liLong.reduce((a,i)=>a+long.sizes[i],0):0, sSz=sf?liShort.reduce((a,i)=>a+short.sizes[i],0):0;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Long (${liLong.length}/${n_long})</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Short (${liShort.length}/${n_short})</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
+  L_g('L_entry-table').innerHTML=h;
+  const nL=L_filled.slice(0,n_long).filter(Boolean).length, nS=L_filled.slice(n_long).filter(Boolean).length;
+  L_g('L_fill-count').innerHTML=`Đã khớp: <span>${nL} Long + ${nS} Short</span> / ${n_long+n_short} lệnh`;
 }
 
-function toggleFill(idx) {
-  filled[idx] = !filled[idx];
-  renderTable(); updateStats(); onLivePrice();
-  if (document.getElementById('tab-chart').classList.contains('active')) drawChart();
-  if (document.getElementById('sim-result').innerHTML.trim()!=='') simulate();
+function L_toggleFill(idx){L_filled[idx]=!L_filled[idx];L_renderTable();L_updateStats();L_onLivePrice();if(L_g('L_tab-chart').classList.contains('active'))L_drawChart();if(L_g('L_sim-result').innerHTML.trim()!=='')L_simulate();}
+function L_selectAll(){L_filled=new Array(L_state.n_long+L_state.n_short).fill(true);L_afterSelect();}
+function L_selectNone(){L_filled=new Array(L_state.n_long+L_state.n_short).fill(false);L_afterSelect();}
+function L_selectLongOnly(){L_filled=L_filled.map((_,i)=>i<L_state.n_long);L_afterSelect();}
+function L_selectShortOnly(){L_filled=L_filled.map((_,i)=>i>=L_state.n_long);L_afterSelect();}
+function L_afterSelect(){L_renderTable();L_updateStats();L_onLivePrice();if(L_g('L_tab-chart').classList.contains('active'))L_drawChart();if(L_g('L_sim-result').innerHTML.trim()!=='')L_simulate();}
+
+function L_updateStats(){
+  const {lf,sf,liLong}=L_getFilledSummary();
+  const {long,e1}=L_state;
+  const firstLongPrice=liLong.length?long.prices[liLong[0]]:e1;
+  const liqDropPct=lf?((firstLongPrice-lf.liq)/firstLongPrice*100):0;
+  L_g('L_stat-row').innerHTML=`
+    <div class="stat"><div class="lbl">New Entry Long</div><div class="val b">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">New Entry Short</div><div class="val a">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">Liq Long</div><div class="val r">${lf?lf.liq.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?'giảm '+liqDropPct.toFixed(1)+'%':''}</div></div>
+    <div class="stat"><div class="lbl">Tổng KL khớp</div><div class="val">${((lf?lf.totalKl:0)+(sf?sf.totalKl:0)).toFixed(2)}</div><div class="sub-val">USDT position</div></div>`;
+  L_updateRisk(lf,sf);
 }
 
-function selectAll()       { filled=new Array(state.n_long+state.n_short).fill(true);  afterSelect(); }
-function selectNone()      { filled=new Array(state.n_long+state.n_short).fill(false); afterSelect(); }
-function selectLongOnly()  { filled=filled.map((_,i)=>i<state.n_long);                afterSelect(); }
-function selectShortOnly() { filled=filled.map((_,i)=>i>=state.n_long);               afterSelect(); }
-function afterSelect() {
-  renderTable(); updateStats(); onLivePrice();
-  if (document.getElementById('tab-chart').classList.contains('active')) drawChart();
-  if (document.getElementById('sim-result').innerHTML.trim()!=='') simulate();
+function L_updateRisk(lf,sf){
+  const {balance,leverage,size_mult}=L_state;
+  const mL=lf?lf.totalKl/leverage:0,mS=sf?sf.totalKl/leverage:0,mT=mL+mS,rp=mT/balance*100;
+  const liqPct=lf?((lf.newEntry-lf.liq)/lf.newEntry*100):0;
+  L_g('L_risk-content').innerHTML=`<div class="result-box">
+    <div class="result-row"><span class="k">Margin Long</span><span class="v b">${mL.toFixed(2)} USDT</span></div>
+    <div class="result-row"><span class="k">Margin Short</span><span class="v a">${mS.toFixed(2)} USDT</span></div>
+    <div class="result-row"><span class="k">Tổng Margin</span><span class="v">${mT.toFixed(2)} USDT</span></div>
+    <div class="result-row"><span class="k">% Balance sử dụng</span><span class="v ${rp>80?'r':rp>50?'a':'g'}">${rp.toFixed(1)}%</span></div>
+    <div class="result-row"><span class="k">Giá thanh lý Long</span><span class="v r">${lf?lf.liq.toFixed(6):'—'}</span></div>
+    <div class="result-row"><span class="k">% giảm đến liq</span><span class="v r">${lf?'-'+liqPct.toFixed(2)+'%':'—'}</span></div>
+    <div class="result-row"><span class="k">Phí Long</span><span class="v a">${lf?lf.fee.toFixed(4):'0.0000'} USDT</span></div>
+    <div class="result-row"><span class="k">Phí Short</span><span class="v a">${sf?sf.fee.toFixed(4):'0.0000'} USDT</span></div>
+    <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((lf?lf.fee:0)+(sf?sf.fee:0)).toFixed(4)} USDT</span></div>
+  </div>
+  ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
+  ${lf&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — nên giảm đòn bẩy.</div>`:''}
+  <div class="warn" style="margin-top:8px">ℹ Martingale x${size_mult}: size tăng theo lũy thừa. Tổng exposure tăng mạnh khi vào nhiều lệnh.</div>`;
 }
 
-function updateStats() {
-  const {lf,sf,liLong} = getFilledSummary();
-  const {long,e1} = state;
-  const firstLongPrice = liLong.length ? long.prices[liLong[0]] : e1;
-  const liqDropPct = lf ? ((firstLongPrice - lf.liq) / firstLongPrice * 100) : 0;
-
-  document.getElementById('stat-row').innerHTML = `
-    <div class="stat">
-      <div class="lbl">New Entry Long</div>
-      <div class="val b">${lf ? lf.newEntry.toFixed(4) : '<span style="color:var(--muted);font-size:13px">—</span>'}</div>
-      <div class="sub-val">${lf ? lf.totalCoins.toFixed(4)+' coin' : 'chưa có lệnh'}</div>
-    </div>
-    <div class="stat">
-      <div class="lbl">New Entry Short</div>
-      <div class="val a">${sf ? sf.newEntry.toFixed(4) : '<span style="color:var(--muted);font-size:13px">—</span>'}</div>
-      <div class="sub-val">${sf ? sf.totalCoins.toFixed(4)+' coin' : 'chưa có lệnh'}</div>
-    </div>
-    <div class="stat">
-      <div class="lbl">Liq Long</div>
-      <div class="val r">${lf ? lf.liq.toFixed(4) : '<span style="color:var(--muted);font-size:13px">—</span>'}</div>
-      <div class="sub-val">${lf ? 'giảm '+liqDropPct.toFixed(1)+'%' : ''}</div>
-    </div>
-    <div class="stat">
-      <div class="lbl">Tổng KL khớp</div>
-      <div class="val">${((lf?lf.totalKl:0)+(sf?sf.totalKl:0)).toFixed(2)}</div>
-      <div class="sub-val">USDT position</div>
-    </div>`;
-
-  updateRisk(lf, sf);
-}
-
-function updateRisk(lf, sf) {
-  const {balance,leverage,size_mult} = state;
-  const mL = lf ? lf.totalKl/leverage : 0;
-  const mS = sf ? sf.totalKl/leverage : 0;
-  const mT = mL+mS;
-  const rp = mT/balance*100;
-  const liqPct = lf ? ((lf.newEntry-lf.liq)/lf.newEntry*100) : 0;
-
-  document.getElementById('risk-content').innerHTML = `
-    <div class="result-box">
-      <div class="result-row"><span class="k">Margin Long (đã khớp)</span><span class="v b">${mL.toFixed(2)} USDT</span></div>
-      <div class="result-row"><span class="k">Margin Short (đã khớp)</span><span class="v a">${mS.toFixed(2)} USDT</span></div>
-      <div class="result-row"><span class="k">Tổng Margin sử dụng</span><span class="v">${mT.toFixed(2)} USDT</span></div>
-      <div class="result-row"><span class="k">% Balance sử dụng</span><span class="v ${rp>80?'r':rp>50?'a':'g'}">${rp.toFixed(1)}%</span></div>
-      <div class="result-row"><span class="k">Giá thanh lý Long</span><span class="v r">${lf?lf.liq.toFixed(6):'—'}</span></div>
-      <div class="result-row"><span class="k">% giảm đến liq (từ new entry)</span><span class="v r">${lf?'-'+liqPct.toFixed(2)+'%':'—'}</span></div>
-      <div class="result-row"><span class="k">Phí Long</span><span class="v a">${lf?lf.fee.toFixed(4):'0.0000'} USDT</span></div>
-      <div class="result-row"><span class="k">Phí Short</span><span class="v a">${sf?sf.fee.toFixed(4):'0.0000'} USDT</span></div>
-      <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((lf?lf.fee:0)+(sf?sf.fee:0)).toFixed(4)} USDT</span></div>
-    </div>
-    ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
-    ${lf&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — nên giảm đòn bẩy.</div>`:''}
-    <div class="warn" style="margin-top:8px">ℹ Martingale x${size_mult}: size tăng theo lũy thừa. Tổng exposure tăng mạnh khi vào nhiều lệnh.</div>`;
-}
-
-function simulate() {
-  if (!state) return;
-  const exitPrice = parseFloat(document.getElementById('sim-price').value);
-  if (isNaN(exitPrice)||exitPrice<=0) return;
-  const {balance,leverage} = state;
-  const {lf,sf,liLong,liShort} = getFilledSummary();
-
-  if (!lf && !sf) {
-    document.getElementById('sim-result').innerHTML =
-      `<div class="empty-msg">⬅ Chưa có lệnh nào được tick khớp.<br>Hãy tick ít nhất 1 lệnh trong tab "Lệnh vào".</div>`;
-    return;
+function L_onLivePrice(){
+  if(!L_state)return;
+  const p=parseFloat(L_g('L_live-price').value);
+  const {lf,sf,liLong,liShort}=L_getFilledSummary();
+  const {long,short,n_long,balance,leverage,e1}=L_state;
+  L_g('L_live-coin-tag').textContent=(L_state.coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  if(isNaN(p)||p<=0){
+    ['L_ls-pnl-long','L_ls-pnl-short','L_ls-pnl-total','L_ls-drop-range','L_ls-position'].forEach(id=>{const el=L_g(id);el.className='ls-val muted';el.textContent='—';});
+    ['L_ls-ror-long','L_ls-ror-short','L_ls-dw','L_ls-drop-cur','L_ls-vs-entry'].forEach(id=>L_g(id).textContent='');
+    L_g('L_live-progress').style.display='none'; return;
   }
-
-  const plRaw  = lf ? (exitPrice - lf.newEntry) * lf.totalCoins : 0;
-  const plNet  = lf ? plRaw  - lf.fee : 0;
-  const psRaw  = sf ? (sf.newEntry - exitPrice) * sf.totalCoins : 0;
-  const psNet  = sf ? psRaw - sf.fee : 0;
-  const total  = plNet + psNet;
-  const dw     = balance + total;
-  const rorL   = lf ? plNet/(lf.totalKl/leverage)*100 : 0;
-  const rorS   = sf ? psNet/(sf.totalKl/leverage)*100 : 0;
-  const liqHit = lf && exitPrice <= lf.liq;
-
-  document.getElementById('sim-result').innerHTML = `
-    <div class="result-box">
-      <div class="result-row">
-        <span class="k">Giá exit</span>
-        <span class="v b">${exitPrice.toFixed(6)}</span>
-      </div>
-      <div class="result-row">
-        <span class="k" style="color:var(--muted)">Lệnh tính</span>
-        <span style="font-size:11px">
-          ${liLong.length ? `<span style="color:var(--green)">${liLong.length} Long</span>` : ''}
-          ${liLong.length&&liShort.length?' + ':''}
-          ${liShort.length ? `<span style="color:var(--red)">${liShort.length} Short</span>` : ''}
-        </span>
-      </div>
-      <div class="sep"></div>
-      ${lf ? `
-        <div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div>
-        <div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>
-      ` : `<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
-      <div class="sep"></div>
-      ${sf ? `
-        <div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div>
-        <div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>
-      ` : `<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
-      <div class="sep"></div>
-      <div class="result-row">
-        <span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span>
-        <span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span>
-      </div>
-      <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
-      <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((lf?lf.fee:0)+(sf?sf.fee:0),4)} USDT</span></div>
-    </div>
-    ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} ≤ Liq Long (${lf.liq.toFixed(4)}) → LONG bị thanh lý!</div>`:''}`;
+  const plRaw=lf?(p-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
+  const psRaw=sf?(sf.newEntry-p)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
+  const total=plNet+psNet,rorL=lf?plNet/(lf.totalKl/leverage)*100:0,rorS=sf?psNet/(sf.totalKl/leverage)*100:0,dw=balance+total;
+  const elPL=L_g('L_ls-pnl-long');
+  if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';L_g('L_ls-ror-long').textContent=fmt(rorL,1)+'%';}
+  else{elPL.className='ls-val muted';elPL.textContent='—';L_g('L_ls-ror-long').textContent='';}
+  const elPS=L_g('L_ls-pnl-short');
+  if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';L_g('L_ls-ror-short').textContent=fmt(rorS,1)+'%';}
+  else{elPS.className='ls-val muted';elPS.textContent='—';L_g('L_ls-ror-short').textContent='';}
+  const elPT=L_g('L_ls-pnl-total');
+  if(lf||sf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=L_g('L_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}
+  else{elPT.className='ls-val muted';elPT.textContent='—';L_g('L_ls-dw').textContent='';}
+  const firstEntry=long.prices[0],lastEntry=long.prices[n_long-1];
+  const dropRange=(firstEntry-lastEntry)/firstEntry*100;
+  const elDR=L_g('L_ls-drop-range');elDR.className='ls-val a';elDR.textContent='-'+dropRange.toFixed(2)+'%';
+  const dropCur=(firstEntry-p)/firstEntry*100,elDC=L_g('L_ls-drop-cur');
+  if(dropCur>0){elDC.textContent='Giá giảm '+dropCur.toFixed(2)+'% từ L1';elDC.style.color='var(--red)';}
+  else if(dropCur<0){elDC.textContent='Giá tăng '+Math.abs(dropCur).toFixed(2)+'% từ L1';elDC.style.color='var(--green)';}
+  else{elDC.textContent='Đang ở Entry 1';elDC.style.color='var(--muted)';}
+  const elPos=L_g('L_ls-position'),elVsE=L_g('L_ls-vs-entry');
+  let zone='',zoneClass='ls-val b';
+  if(p>firstEntry){zone='Trên Entry L1';zoneClass='ls-val g';elVsE.textContent='+'+((p-firstEntry)/firstEntry*100).toFixed(2)+'% vs L1';elVsE.style.color='var(--green)';}
+  else if(lf&&p<=lf.liq){zone='⚠ Liq Zone';zoneClass='ls-val r';elVsE.textContent='Bị thanh lý!';elVsE.style.color='var(--red)';}
+  else{
+    let level=n_long;for(let i=0;i<n_long;i++){if(p>=long.prices[i]){level=i;break;}}
+    if(level===0){zone='Entry 1 Long';zoneClass='ls-val b';}
+    else if(level<n_long){zone='DCA L'+level+'→L'+(level+1);zoneClass='ls-val a';}
+    else{zone='Dưới L'+n_long;zoneClass='ls-val r';}
+    if(lf){const vsNE=(p-lf.newEntry)/lf.newEntry*100;elVsE.textContent=fmt(vsNE,2)+'% vs new entry';elVsE.style.color=vsNE>=0?'var(--green)':'var(--red)';}
+    else elVsE.textContent='';
+  }
+  elPos.className=zoneClass;elPos.textContent=zone;
+  L_g('L_live-progress').style.display='block';
+  const pgLeft=lf?Math.min(lf.liq*0.95,lastEntry*0.95):lastEntry*0.9,pgRight=firstEntry*1.05;
+  const pct=Math.max(0,Math.min(100,(p-pgLeft)/(pgRight-pgLeft)*100));
+  const liqPct2=lf?Math.max(0,Math.min(100,(lf.liq-pgLeft)/(pgRight-pgLeft)*100)):-1;
+  L_g('L_pg-left').textContent=pgLeft.toFixed(4);L_g('L_pg-right').textContent=pgRight.toFixed(4);
+  L_g('L_pg-center').textContent=lf?'Liq: '+lf.liq.toFixed(4):'';
+  const fill=L_g('L_pg-fill');fill.style.width=pct+'%';fill.className='progress-bar-fill'+(pct<30?' danger':'');
+  const marker=L_g('L_pg-marker');marker.style.left=pct+'%';marker.style.background=total>=0?'var(--green)':'var(--red)';
+  const liqM=L_g('L_pg-liq');if(liqPct2>=0){liqM.style.display='block';liqM.style.left=liqPct2+'%';}else liqM.style.display='none';
 }
 
-function drawChart() {
-  if (!state) return;
-  const {e1} = state;
-  const {lf,sf} = getFilledSummary();
-
-  if (!lf && !sf) {
-    if (pnlChart) { pnlChart.destroy(); pnlChart=null; }
-    document.getElementById('chart-legend').innerHTML =
-      `<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;
-    return;
-  }
-
-  const refLiq  = lf ? lf.liq : (sf?sf.newEntry*0.5:e1*0.5);
-  const priceMin = Math.max(refLiq*0.6, 0.0001);
-  const priceMax = e1 * 1.35;
-  const steps = 120;
-  const labels=[], ldArr=[], sdArr=[], tdArr=[];
-
-  for (let i=0;i<=steps;i++) {
-    const p = priceMin + (priceMax-priceMin)*i/steps;
-    labels.push(p.toFixed(4));
-    const pl = lf ? (p-lf.newEntry)*lf.totalCoins - lf.fee : 0;
-    const ps = sf ? (sf.newEntry-p)*sf.totalCoins - sf.fee : 0;
-    if (lf) ldArr.push(+pl.toFixed(2));
-    if (sf) sdArr.push(+ps.toFixed(2));
-    tdArr.push(+(pl+ps).toFixed(2));
-  }
-
-  const ctx = document.getElementById('canvas-pnl').getContext('2d');
-  if (pnlChart) pnlChart.destroy();
-
-  const datasets = [];
-  if (lf) datasets.push({label:'Long PnL', data:ldArr, borderColor:'#00e5a0', borderWidth:1.5, pointRadius:0, tension:0.3});
-  if (sf) datasets.push({label:'Short PnL', data:sdArr, borderColor:'#ff4d6a', borderWidth:1.5, pointRadius:0, tension:0.3});
-  if (lf&&sf) datasets.push({label:'Tổng PnL', data:tdArr, borderColor:'#4d9fff', borderWidth:2.5, pointRadius:0, tension:0.3, borderDash:[5,3]});
-
-  pnlChart = new Chart(ctx, {
-    type:'line', data:{labels,datasets},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{mode:'index',intersect:false,
-          callbacks:{title:i=>`Giá: ${i[0].label}`, label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}
-      },
-      scales:{
-        x:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},
-        y:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}
-      }
-    }
-  });
-
-  const legItems=[];
-  if (lf) legItems.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);
-  if (sf) legItems.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);
-  if (lf&&sf) legItems.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
-  document.getElementById('chart-legend').innerHTML = legItems.join('');
+function L_simulate(){
+  if(!L_state)return;
+  const exitPrice=parseFloat(L_g('L_sim-price').value);
+  if(isNaN(exitPrice)||exitPrice<=0)return;
+  const {balance,leverage}=L_state;
+  const {lf,sf,liLong,liShort}=L_getFilledSummary();
+  if(!lf&&!sf){L_g('L_sim-result').innerHTML=`<div class="empty-msg">⬅ Chưa có lệnh nào được tick khớp.<br>Hãy tick ít nhất 1 lệnh trong tab "Lệnh vào".</div>`;return;}
+  const plRaw=lf?(exitPrice-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
+  const psRaw=sf?(sf.newEntry-exitPrice)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
+  const total=plNet+psNet,dw=balance+total,rorL=lf?plNet/(lf.totalKl/leverage)*100:0,rorS=sf?psNet/(sf.totalKl/leverage)*100:0;
+  const liqHit=lf&&exitPrice<=lf.liq;
+  L_g('L_sim-result').innerHTML=`<div class="result-box">
+    <div class="result-row"><span class="k">Giá exit</span><span class="v b">${exitPrice.toFixed(6)}</span></div>
+    <div class="result-row"><span class="k">Lệnh tính</span><span style="font-size:11px">${liLong.length?`<span style="color:var(--green)">${liLong.length} Long</span>`:''} ${liLong.length&&liShort.length?'+':''} ${liShort.length?`<span style="color:var(--red)">${liShort.length} Short</span>`:''}</span></div>
+    <div class="sep"></div>
+    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    <div class="sep"></div>
+    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    <div class="sep"></div>
+    <div class="result-row"><span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
+    <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
+    <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((lf?lf.fee:0)+(sf?sf.fee:0),4)} USDT</span></div>
+  </div>
+  ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} ≤ Liq Long (${lf.liq.toFixed(4)}) → LONG bị thanh lý!</div>`:''}`;
 }
 
-function switchTab(name) {
+function L_drawChart(){
+  if(!L_state)return;
+  const {e1}=L_state,{lf,sf}=L_getFilledSummary();
+  if(!lf&&!sf){if(L_pnlChart){L_pnlChart.destroy();L_pnlChart=null;}L_g('L_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
+  const refLiq=lf?lf.liq:(sf?sf.newEntry*0.5:e1*0.5);
+  const priceMin=Math.max(refLiq*0.6,0.0001),priceMax=e1*1.35,steps=120;
+  const labels=[],ldArr=[],sdArr=[],tdArr=[];
+  for(let i=0;i<=steps;i++){const p=priceMin+(priceMax-priceMin)*i/steps;labels.push(p.toFixed(4));const pl=lf?(p-lf.newEntry)*lf.totalCoins-lf.fee:0,ps=sf?(sf.newEntry-p)*sf.totalCoins-sf.fee:0;if(lf)ldArr.push(+pl.toFixed(2));if(sf)sdArr.push(+ps.toFixed(2));tdArr.push(+(pl+ps).toFixed(2));}
+  const ctx=L_g('L_canvas-pnl').getContext('2d');if(L_pnlChart)L_pnlChart.destroy();
+  const datasets=[];
+  if(lf)datasets.push({label:'Long PnL',data:ldArr,borderColor:'#00e5a0',borderWidth:1.5,pointRadius:0,tension:0.3});
+  if(sf)datasets.push({label:'Short PnL',data:sdArr,borderColor:'#ff4d6a',borderWidth:1.5,pointRadius:0,tension:0.3});
+  if(lf&&sf)datasets.push({label:'Tổng PnL',data:tdArr,borderColor:'#4d9fff',borderWidth:2.5,pointRadius:0,tension:0.3,borderDash:[5,3]});
+  L_pnlChart=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:i=>`Giá: ${i[0].label}`,label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}},scales:{x:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}}}});
+  const li=[];if(lf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);if(sf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);if(lf&&sf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
+  L_g('L_chart-legend').innerHTML=li.join('');
+}
+
+function L_switchTab(name){
   const names=['entries','sim','chart','risk'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  if (name==='chart') setTimeout(drawChart,50);
+  L_g('pane-long').querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  L_g('pane-long').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  L_g('L_tab-'+name).classList.add('active');
+  if(name==='chart')setTimeout(L_drawChart,50);
 }
 
-window.onload = () => calculate();
+// ══════════════════════════════════════════════════════════════
+//  ███████╗██╗  ██╗ ██████╗ ██████╗ ████████╗    ████████╗ █████╗ ██████╗
+//  ██╔════╝██║  ██║██╔═══██╗██╔══██╗╚══██╔══╝       ██╔══╝██╔══██╗██╔══██╗
+//  ███████╗███████║██║   ██║██████╔╝   ██║           ██║   ███████║██████╔╝
+//  ╚════██║██╔══██║██║   ██║██╔══██╗   ██║           ██║   ██╔══██║██╔══██╗
+//  ███████║██║  ██║╚██████╔╝██║  ██║   ██║           ██║   ██║  ██║██████╔╝
+//  ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝           ╚═╝   ╚═╝  ╚═╝╚═════╝
+// ══════════════════════════════════════════════════════════════
+let S_state = null;
+let S_pnlChart = null;
+let S_filled = [];
+
+function S_g(id) { return document.getElementById(id); }
+
+function S_calcShortDCA(e1,n,leverage,budget,pct_rise,size_mult){
+  const feeRate=parseFloat(S_g('S_fee_rate').value)/100;
+  const series=Array.from({length:n},(_,i)=>Math.pow(size_mult,i));
+  const sumS=series.reduce((a,b)=>a+b,0),base=budget/(2*sumS);
+  const prices=[],sizes=[],kls=[],coins=[];
+  for(let i=0;i<n;i++){const p=e1*Math.pow(1+pct_rise/100,i),s=base*Math.pow(size_mult,i),kl=s*leverage;prices.push(p);sizes.push(s);kls.push(kl);coins.push(kl/p);}
+  const totalKl=kls.reduce((a,b)=>a+b,0),totalCoins=coins.reduce((a,b)=>a+b,0),newEntry=totalKl/totalCoins,liq=newEntry+budget/totalCoins;
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+}
+
+function S_calcLongDCA(e1,n,leverage,budget,pct_rise,size_mult,offset_pct,shortSize1){
+  const feeRate=parseFloat(S_g('S_fee_rate').value)/100;
+  const longBase=shortSize1/2;
+  const prices=[],sizes=[],kls=[],coins=[];
+  for(let i=0;i<n;i++){const p=e1*(1+offset_pct/100)*Math.pow(1+pct_rise/100,i),s=longBase*Math.pow(2,i),kl=s*leverage;prices.push(p);sizes.push(s);kls.push(kl);coins.push(kl/p);}
+  const totalKl=kls.reduce((a,b)=>a+b,0),totalCoins=coins.reduce((a,b)=>a+b,0),newEntry=totalKl/totalCoins,liq=newEntry-budget/totalCoins;
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+}
+
+function S_getFilledSummary(){
+  if(!S_state)return{sf:null,lf:null,liShort:[],liLong:[]};
+  const{short,long,n_short,n_long,budget}=S_state,feeRate=short.feeRate;
+  function aggShort(src,indices){if(!indices.length)return null;const tKl=indices.reduce((a,i)=>a+src.kls[i],0),tC=indices.reduce((a,i)=>a+src.coins[i],0),nE=tKl/tC,liq=nE+budget/tC;return{totalKl:tKl,totalCoins:tC,newEntry:nE,liq,fee:tKl*feeRate};}
+  function aggLong(src,indices){if(!indices.length)return null;const tKl=indices.reduce((a,i)=>a+src.kls[i],0),tC=indices.reduce((a,i)=>a+src.coins[i],0),nE=tKl/tC,liq=nE-budget/tC;return{totalKl:tKl,totalCoins:tC,newEntry:nE,liq,fee:tKl*feeRate};}
+  const liShort=Array.from({length:n_short},(_,i)=>i).filter(i=>S_filled[i]);
+  const liLong=Array.from({length:n_long},(_,i)=>i).filter(i=>S_filled[n_short+i]);
+  return{sf:aggShort(short,liShort),lf:aggLong(long,liLong),liShort,liLong};
+}
+
+function S_calculate(){
+  const coin=S_g('S_coin').value||'SYMBOL',balance=+S_g('S_balance').value,budget=+S_g('S_budget').value,leverage=+S_g('S_leverage').value;
+  const e1=+S_g('S_entry1').value,pct_rise=+S_g('S_pct_rise').value,n_short=+S_g('S_n_short').value,n_long=+S_g('S_n_long').value;
+  const long_offset=+S_g('S_long_offset').value,size_mult=+S_g('S_size_mult').value;
+  const short=S_calcShortDCA(e1,n_short,leverage,budget,pct_rise,size_mult);
+  const long=S_calcLongDCA(e1,n_long,leverage,budget,pct_rise,size_mult,long_offset,short.sizes[0]);
+  S_state={coin,balance,budget,leverage,e1,pct_rise,n_short,n_long,short,long,size_mult};
+  S_filled=new Array(n_short+n_long).fill(true);
+  S_g('S_results').style.display='block';
+  S_g('S_sim-price').value=e1;
+  S_g('S_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  S_onLivePrice();S_renderTable();S_updateStats();S_drawChart();
+}
+
+function S_renderTable(){
+  const{short,long,n_short,n_long}=S_state,{sf,lf,liShort,liLong}=S_getFilledSummary();
+  let h=`<tr><th>Khớp</th><th>Lệnh</th><th>Giá vào</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr>`;
+  const tickSvg=(clr)=>`<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+  let cumKl=0;
+  for(let i=0;i<n_short;i++){const on=S_filled[i];if(on)cumKl+=short.kls[i];const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';h+=`<tr class="${rc}" id="S_row-${i}"><td><div class="chk"><div class="${cc}" onclick="S_toggleFill(${i})">${on?tickSvg('#ff4d6a'):''}</div></div></td><td>Short ${i+1} <span class="tag tag-s">S</span></td><td>${short.prices[i].toFixed(6)}</td><td>${short.sizes[i].toFixed(4)}</td><td>${short.kls[i].toFixed(4)}</td><td>${short.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;}
+  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;
+  cumKl=0;
+  for(let i=0;i<n_long;i++){const idx=n_short+i,on=S_filled[idx];if(on)cumKl+=long.kls[i];const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';h+=`<tr class="${rc}" id="S_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="S_toggleFill(${idx})">${on?tickSvg('#00e5a0'):''}</div></div></td><td>Long ${i+1} <span class="tag tag-l">L</span></td><td>${long.prices[i].toFixed(6)}</td><td>${long.sizes[i].toFixed(4)}</td><td>${long.kls[i].toFixed(4)}</td><td>${long.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;}
+  const sSz=sf?liShort.reduce((a,i)=>a+short.sizes[i],0):0,lSz=lf?liLong.reduce((a,i)=>a+long.sizes[i],0):0;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Short (${liShort.length}/${n_short})</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Long (${liLong.length}/${n_long})</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
+  S_g('S_entry-table').innerHTML=h;
+  const nS=S_filled.slice(0,n_short).filter(Boolean).length,nL=S_filled.slice(n_short).filter(Boolean).length;
+  S_g('S_fill-count').innerHTML=`Đã khớp: <span>${nS} Short + ${nL} Long</span> / ${n_short+n_long} lệnh`;
+}
+
+function S_toggleFill(idx){S_filled[idx]=!S_filled[idx];S_renderTable();S_updateStats();S_onLivePrice();if(S_g('S_tab-chart').classList.contains('active'))S_drawChart();if(S_g('S_sim-result').innerHTML.trim()!=='')S_simulate();}
+function S_selectAll(){S_filled=new Array(S_state.n_short+S_state.n_long).fill(true);S_afterSelect();}
+function S_selectNone(){S_filled=new Array(S_state.n_short+S_state.n_long).fill(false);S_afterSelect();}
+function S_selectShortOnly(){S_filled=S_filled.map((_,i)=>i<S_state.n_short);S_afterSelect();}
+function S_selectLongOnly(){S_filled=S_filled.map((_,i)=>i>=S_state.n_short);S_afterSelect();}
+function S_afterSelect(){S_renderTable();S_updateStats();S_onLivePrice();if(S_g('S_tab-chart').classList.contains('active'))S_drawChart();if(S_g('S_sim-result').innerHTML.trim()!=='')S_simulate();}
+
+function S_updateStats(){
+  const{sf,lf,liShort}=S_getFilledSummary(),{short,e1}=S_state;
+  const firstShortPrice=liShort.length?short.prices[liShort[0]]:e1;
+  const liqRisePct=sf?((sf.liq-firstShortPrice)/firstShortPrice*100):0;
+  S_g('S_stat-row').innerHTML=`
+    <div class="stat"><div class="lbl">New Entry Short</div><div class="val r">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">New Entry Long</div><div class="val g">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">Liq Short</div><div class="val r">${sf?sf.liq.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?'tăng +'+liqRisePct.toFixed(1)+'%':''}</div></div>
+    <div class="stat"><div class="lbl">Tổng KL khớp</div><div class="val">${((sf?sf.totalKl:0)+(lf?lf.totalKl:0)).toFixed(2)}</div><div class="sub-val">USDT position</div></div>`;
+  S_updateRisk(sf,lf);
+}
+
+function S_updateRisk(sf,lf){
+  const{balance,leverage,size_mult}=S_state;
+  const mS=sf?sf.totalKl/leverage:0,mL=lf?lf.totalKl/leverage:0,mT=mS+mL,rp=mT/balance*100;
+  const liqPct=sf?((sf.liq-sf.newEntry)/sf.newEntry*100):0;
+  S_g('S_risk-content').innerHTML=`<div class="result-box">
+    <div class="result-row"><span class="k">Margin Short</span><span class="v r">${mS.toFixed(2)} USDT</span></div>
+    <div class="result-row"><span class="k">Margin Long</span><span class="v g">${mL.toFixed(2)} USDT</span></div>
+    <div class="result-row"><span class="k">Tổng Margin</span><span class="v">${mT.toFixed(2)} USDT</span></div>
+    <div class="result-row"><span class="k">% Balance sử dụng</span><span class="v ${rp>80?'r':rp>50?'a':'g'}">${rp.toFixed(1)}%</span></div>
+    <div class="result-row"><span class="k">Giá thanh lý Short</span><span class="v r">${sf?sf.liq.toFixed(6):'—'}</span></div>
+    <div class="result-row"><span class="k">% tăng đến liq Short</span><span class="v r">${sf?'+'+liqPct.toFixed(2)+'%':'—'}</span></div>
+    <div class="result-row"><span class="k">Giá thanh lý Long</span><span class="v g">${lf?lf.liq.toFixed(6):'—'}</span></div>
+    <div class="result-row"><span class="k">Phí Short</span><span class="v a">${sf?sf.fee.toFixed(4):'0.0000'} USDT</span></div>
+    <div class="result-row"><span class="k">Phí Long</span><span class="v a">${lf?lf.fee.toFixed(4):'0.0000'} USDT</span></div>
+    <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((sf?sf.fee:0)+(lf?lf.fee:0)).toFixed(4)} USDT</span></div>
+  </div>
+  ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
+  ${sf&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq Short chỉ +${liqPct.toFixed(1)}% — nên giảm đòn bẩy.</div>`:''}
+  <div class="warn" style="margin-top:8px">ℹ Martingale ×${size_mult}: size tăng theo lũy thừa. Tổng exposure tăng mạnh khi vào nhiều lệnh.</div>`;
+}
+
+function S_onLivePrice(){
+  if(!S_state)return;
+  const p=parseFloat(S_g('S_live-price').value);
+  const{sf,lf,liShort,liLong}=S_getFilledSummary();
+  const{short,long,n_short,balance,leverage,e1}=S_state;
+  S_g('S_live-coin-tag').textContent=(S_state.coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  if(isNaN(p)||p<=0){
+    ['S_ls-pnl-short','S_ls-pnl-long','S_ls-pnl-total','S_ls-rise-range','S_ls-position'].forEach(id=>{const el=S_g(id);el.className='ls-val muted';el.textContent='—';});
+    ['S_ls-ror-short','S_ls-ror-long','S_ls-dw','S_ls-rise-cur','S_ls-vs-entry'].forEach(id=>S_g(id).textContent='');
+    S_g('S_live-progress').style.display='none';return;
+  }
+  const psRaw=sf?(sf.newEntry-p)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
+  const plRaw=lf?(p-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
+  const total=psNet+plNet,rorS=sf?psNet/(sf.totalKl/leverage)*100:0,rorL=lf?plNet/(lf.totalKl/leverage)*100:0,dw=balance+total;
+  const elPS=S_g('S_ls-pnl-short');
+  if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';S_g('S_ls-ror-short').textContent=fmt(rorS,1)+'%';}
+  else{elPS.className='ls-val muted';elPS.textContent='—';S_g('S_ls-ror-short').textContent='';}
+  const elPL=S_g('S_ls-pnl-long');
+  if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';S_g('S_ls-ror-long').textContent=fmt(rorL,1)+'%';}
+  else{elPL.className='ls-val muted';elPL.textContent='—';S_g('S_ls-ror-long').textContent='';}
+  const elPT=S_g('S_ls-pnl-total');
+  if(sf||lf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=S_g('S_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}
+  else{elPT.className='ls-val muted';elPT.textContent='—';S_g('S_ls-dw').textContent='';}
+  const firstEntry=short.prices[0],lastEntry=short.prices[n_short-1];
+  const riseRange=(lastEntry-firstEntry)/firstEntry*100;
+  const elRR=S_g('S_ls-rise-range');elRR.className='ls-val a';elRR.textContent='+'+riseRange.toFixed(2)+'%';
+  const riseCur=(p-firstEntry)/firstEntry*100,elRC=S_g('S_ls-rise-cur');
+  if(riseCur>0){elRC.textContent='Giá tăng '+riseCur.toFixed(2)+'% từ S1';elRC.style.color='var(--red)';}
+  else if(riseCur<0){elRC.textContent='Giá giảm '+Math.abs(riseCur).toFixed(2)+'% từ S1';elRC.style.color='var(--green)';}
+  else{elRC.textContent='Đang ở Entry S1';elRC.style.color='var(--muted)';}
+  const elPos=S_g('S_ls-position'),elVsE=S_g('S_ls-vs-entry');
+  let zone='',zoneClass='ls-val b';
+  if(p<firstEntry){zone='Dưới Entry S1';zoneClass='ls-val g';elVsE.textContent=fmt((p-firstEntry)/firstEntry*100,2)+'% vs S1';elVsE.style.color='var(--green)';}
+  else if(sf&&p>=sf.liq){zone='⚠ Liq Zone';zoneClass='ls-val r';elVsE.textContent='Short bị thanh lý!';elVsE.style.color='var(--red)';}
+  else{
+    let level=n_short;for(let i=0;i<n_short;i++){if(p<=short.prices[i]){level=i;break;}}
+    if(level===0){zone='Entry S1';zoneClass='ls-val b';}
+    else if(level<n_short){zone='DCA S'+level+'→S'+(level+1);zoneClass='ls-val a';}
+    else{zone='Trên S'+n_short;zoneClass='ls-val r';}
+    if(sf){const vsNE=(p-sf.newEntry)/sf.newEntry*100;elVsE.textContent=fmt(vsNE,2)+'% vs new entry';elVsE.style.color=vsNE<=0?'var(--green)':'var(--red)';}
+    else elVsE.textContent='';
+  }
+  elPos.className=zoneClass;elPos.textContent=zone;
+  S_g('S_live-progress').style.display='block';
+  const pgLeft=firstEntry*0.95,pgRight=sf?sf.liq*1.05:lastEntry*1.05;
+  const pct=Math.max(0,Math.min(100,(p-pgLeft)/(pgRight-pgLeft)*100));
+  const liqPct2=sf?Math.max(0,Math.min(100,(sf.liq-pgLeft)/(pgRight-pgLeft)*100)):-1;
+  S_g('S_pg-left').textContent=pgLeft.toFixed(4);S_g('S_pg-right').textContent=pgRight.toFixed(4);
+  S_g('S_pg-center').textContent=sf?'Liq: '+sf.liq.toFixed(4):'';
+  const fill=S_g('S_pg-fill');fill.style.width=pct+'%';fill.className='progress-bar-fill'+(pct>70?' danger':'');
+  const marker=S_g('S_pg-marker');marker.style.left=pct+'%';marker.style.background=total>=0?'var(--green)':'var(--red)';
+  const liqM=S_g('S_pg-liq');if(liqPct2>=0){liqM.style.display='block';liqM.style.left=liqPct2+'%';}else liqM.style.display='none';
+}
+
+function S_simulate(){
+  if(!S_state)return;
+  const exitPrice=parseFloat(S_g('S_sim-price').value);
+  if(isNaN(exitPrice)||exitPrice<=0)return;
+  const{balance,leverage}=S_state,{sf,lf,liShort,liLong}=S_getFilledSummary();
+  if(!sf&&!lf){S_g('S_sim-result').innerHTML=`<div class="empty-msg">⬅ Chưa có lệnh nào được tick khớp.<br>Hãy tick ít nhất 1 lệnh trong tab "Lệnh vào".</div>`;return;}
+  const psRaw=sf?(sf.newEntry-exitPrice)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
+  const plRaw=lf?(exitPrice-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
+  const total=psNet+plNet,dw=balance+total,rorS=sf?psNet/(sf.totalKl/leverage)*100:0,rorL=lf?plNet/(lf.totalKl/leverage)*100:0;
+  const liqHit=sf&&exitPrice>=sf.liq;
+  S_g('S_sim-result').innerHTML=`<div class="result-box">
+    <div class="result-row"><span class="k">Giá exit</span><span class="v b">${exitPrice.toFixed(6)}</span></div>
+    <div class="result-row"><span class="k">Lệnh tính</span><span style="font-size:11px">${liShort.length?`<span style="color:var(--red)">${liShort.length} Short</span>`:''} ${liShort.length&&liLong.length?'+':''} ${liLong.length?`<span style="color:var(--green)">${liLong.length} Long</span>`:''}</span></div>
+    <div class="sep"></div>
+    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    <div class="sep"></div>
+    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    <div class="sep"></div>
+    <div class="result-row"><span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
+    <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
+    <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((sf?sf.fee:0)+(lf?lf.fee:0),4)} USDT</span></div>
+  </div>
+  ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} ≥ Liq Short (${sf.liq.toFixed(4)}) → SHORT bị thanh lý!</div>`:''}`;
+}
+
+function S_drawChart(){
+  if(!S_state)return;
+  const{sf,lf}=S_getFilledSummary();
+  if(!sf&&!lf){if(S_pnlChart){S_pnlChart.destroy();S_pnlChart=null;}S_g('S_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
+  const{e1}=S_state,refLiq=sf?sf.liq:(lf?lf.newEntry*1.5:e1*1.5);
+  const priceMin=Math.max(e1*0.65,0.0001),priceMax=refLiq*1.1,steps=120;
+  const labels=[],sdArr=[],ldArr=[],tdArr=[];
+  for(let i=0;i<=steps;i++){const p=priceMin+(priceMax-priceMin)*i/steps;labels.push(p.toFixed(4));const ps=sf?(sf.newEntry-p)*sf.totalCoins-sf.fee:0,pl=lf?(p-lf.newEntry)*lf.totalCoins-lf.fee:0;if(sf)sdArr.push(+ps.toFixed(2));if(lf)ldArr.push(+pl.toFixed(2));tdArr.push(+(ps+pl).toFixed(2));}
+  const ctx=S_g('S_canvas-pnl').getContext('2d');if(S_pnlChart)S_pnlChart.destroy();
+  const datasets=[];
+  if(sf)datasets.push({label:'Short PnL',data:sdArr,borderColor:'#ff4d6a',borderWidth:1.5,pointRadius:0,tension:0.3});
+  if(lf)datasets.push({label:'Long PnL',data:ldArr,borderColor:'#00e5a0',borderWidth:1.5,pointRadius:0,tension:0.3});
+  if(sf&&lf)datasets.push({label:'Tổng PnL',data:tdArr,borderColor:'#4d9fff',borderWidth:2.5,pointRadius:0,tension:0.3,borderDash:[5,3]});
+  S_pnlChart=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:i=>`Giá: ${i[0].label}`,label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}},scales:{x:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}}}});
+  const li=[];if(sf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);if(lf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);if(sf&&lf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
+  S_g('S_chart-legend').innerHTML=li.join('');
+}
+
+function S_switchTab(name){
+  const names=['entries','sim','chart','risk'];
+  S_g('pane-short').querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  S_g('pane-short').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  S_g('S_tab-'+name).classList.add('active');
+  if(name==='chart')setTimeout(S_drawChart,50);
+}
+
+// ── INIT
+window.onload = () => { L_calculate(); };
 </script>
 </body>
 </html>
