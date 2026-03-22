@@ -413,6 +413,50 @@
 </div><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════
+//  BINANCE CROSS MARGIN LIQUIDATION CALCULATOR (HEDGE MODE)
+// ══════════════════════════════════════════════════════════════
+function getMmrTier(notional) {
+  if (notional <= 0)       return { mmr: 0,      cum: 0 };
+  if (notional < 10000)    return { mmr: 0.004,  cum: 0 };
+  if (notional < 50000)    return { mmr: 0.005,  cum: 10 };
+  if (notional < 250000)   return { mmr: 0.01,   cum: 260 };
+  if (notional < 1000000)  return { mmr: 0.02,   cum: 2760 };
+  if (notional < 7500000)  return { mmr: 0.05,   cum: 32760 };
+  return                          { mmr: 0.10,   cum: 407760 };
+}
+
+function calcCrossLiq(lCoin, lAvg, sCoin, sAvg, walletBalance) {
+  let crossLiq = null;
+  if (lCoin > 0 || sCoin > 0) {
+    const tierL = getMmrTier(lCoin * lAvg);
+    const mmrL = tierL.mmr; const cumL = tierL.cum;
+    const tierS = getMmrTier(sCoin * sAvg);
+    const mmrS = tierS.mmr; const cumS = tierS.cum;
+
+    let num = (lCoin * lAvg) - (sCoin * sAvg) - walletBalance;
+    let den = 0;
+
+    // Hedge mode rules: MMR is dynamically scaled to largest position
+    if (lCoin > sCoin) {
+      num -= cumL;
+      den = lCoin - sCoin - (lCoin * mmrL);
+    } else if (sCoin > lCoin) {
+      num -= cumS;
+      den = lCoin - sCoin - (sCoin * mmrS); 
+    } else {
+      num -= cumL; 
+      den = lCoin - sCoin - (lCoin * mmrL); 
+    }
+
+    if (den !== 0) {
+      const liq = num / den;
+      if (liq > 0) crossLiq = liq;
+    }
+  }
+  return crossLiq;
+}
+
+// ══════════════════════════════════════════════════════════════
 //  MODE SWITCHER
 // ══════════════════════════════════════════════════════════════
 function switchMode(mode) {
@@ -479,15 +523,10 @@ function L_getFilledSummary() {
   let crossLiq = null;
   let cL = lf ? lf.totalCoins : 0, cS = sf ? sf.totalCoins : 0;
   if (cL > 0 || cS > 0) {
-    let klL = lf ? lf.totalKl : 0, klS = sf ? sf.totalKl : 0;
+    let avgL = lf ? lf.newEntry : 0, avgS = sf ? sf.newEntry : 0;
     let fee = (lf ? lf.fee : 0) + (sf ? sf.fee : 0);
     let netBal = balance - fee;
-    let mmr = 0.004; // Tier 1 Binance (0.4%)
-    let den = cL - cS - (cL + cS) * mmr;
-    if (den !== 0) {
-      let liq = (klL - klS - netBal) / den;
-      if (liq > 0) crossLiq = liq;
-    }
+    crossLiq = calcCrossLiq(cL, avgL, cS, avgS, netBal);
   }
   return {lf,sf,liLong,liShort,crossLiq};
 }
@@ -573,7 +612,7 @@ function L_updateRisk(lf,sf,crossLiq,cL,cS){
   </div>
   ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
   ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
-  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin dùng chung Balance. Tỷ lệ MMR mặc định: 0.4%.</div>`;
+  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin (Hedge Mode) sử dụng chung Wallet Balance. Bậc MMR được Auto-scale theo tổng Notional Binance (0.4% → 10%).</div>`;
 }
 
 function L_onLivePrice(){
@@ -719,15 +758,10 @@ function S_getFilledSummary(){
   let crossLiq = null;
   let cL = lf ? lf.totalCoins : 0, cS = sf ? sf.totalCoins : 0;
   if (cL > 0 || cS > 0) {
-    let klL = lf ? lf.totalKl : 0, klS = sf ? sf.totalKl : 0;
+    let avgL = lf ? lf.newEntry : 0, avgS = sf ? sf.newEntry : 0;
     let fee = (lf ? lf.fee : 0) + (sf ? sf.fee : 0);
     let netBal = balance - fee;
-    let mmr = 0.004; // Tier 1 Binance (0.4%)
-    let den = cL - cS - (cL + cS) * mmr;
-    if (den !== 0) {
-      let liq = (klL - klS - netBal) / den;
-      if (liq > 0) crossLiq = liq;
-    }
+    crossLiq = calcCrossLiq(cL, avgL, cS, avgS, netBal);
   }
   return{sf,lf,liShort,liLong,crossLiq};
 }
@@ -807,7 +841,7 @@ function S_updateRisk(sf,lf,crossLiq,cL,cS){
   </div>
   ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
   ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
-  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin dùng chung Balance. Tỷ lệ MMR mặc định: 0.4%.</div>`;
+  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin (Hedge Mode) sử dụng chung Wallet Balance. Bậc MMR được Auto-scale theo tổng Notional Binance (0.4% → 10%).</div>`;
 }
 
 function S_onLivePrice(){
