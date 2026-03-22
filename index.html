@@ -72,6 +72,7 @@
   .stat .val { font-size:17px; font-weight:600; }
   .stat .val.g { color:var(--green); } .stat .val.r { color:var(--red); }
   .stat .val.b { color:var(--blue); } .stat .val.a { color:var(--amber); }
+  .stat .val.muted { color:var(--muted); }
   .stat .sub-val { font-size:10px; color:var(--muted); margin-top:2px; }
 
   /* inner tabs */
@@ -192,14 +193,12 @@
 <body>
 <div class="app">
 
-  <!-- ══════════════════ APP HEADER ══════════════════ -->
   <div class="app-header">
     <h1>TRADE DCA BINANCE FUTURE</h1>
     <span class="badge badge-futures">FUTURES</span>
-    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Tick lệnh khớp → tính lãi/lỗ thực tế</span>
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Tính giá cháy Cross Margin - Hedge Mode</span>
   </div>
 
-  <!-- ══════════════════ MODE TABS ══════════════════ -->
   <div class="mode-tabs">
     <button class="mode-tab long active" onclick="switchMode('long')">
       📈 DCA LONG
@@ -211,7 +210,6 @@
     </button>
   </div>
 
-  <!-- ══════════════════ LONG PANE ══════════════════ -->
   <div class="mode-pane active" id="pane-long">
     <div class="grid2">
       <div>
@@ -312,7 +310,6 @@
     </div>
   </div>
 
-  <!-- ══════════════════ SHORT PANE ══════════════════ -->
   <div class="mode-pane" id="pane-short">
     <div class="grid2">
       <div>
@@ -413,9 +410,7 @@
     </div>
   </div>
 
-</div><!-- .app -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════
 //  MODE SWITCHER
@@ -425,28 +420,16 @@ function switchMode(mode) {
   document.querySelectorAll('.mode-pane').forEach(p => p.classList.remove('active'));
   document.querySelector('.mode-tab.' + mode).classList.add('active');
   document.getElementById('pane-' + mode).classList.add('active');
-  // redraw chart of newly visible pane if needed
   if (mode === 'long'  && L_state && document.getElementById('L_tab-chart').classList.contains('active')) setTimeout(L_drawChart, 50);
   if (mode === 'short' && S_state && document.getElementById('S_tab-chart').classList.contains('active')) setTimeout(S_drawChart, 50);
 }
 
-// ══════════════════════════════════════════════════════════════
-//  SHARED HELPER
-// ══════════════════════════════════════════════════════════════
 function fmt(n, dec=2) { return (n>=0?'':'-') + Math.abs(n).toFixed(dec); }
 
 // ══════════════════════════════════════════════════════════════
-//  ██╗      ██████╗ ███╗   ██╗ ██████╗     ████████╗ █████╗ ██████╗
-//  ██║     ██╔═══██╗████╗  ██║██╔════╝        ██╔══╝██╔══██╗██╔══██╗
-//  ██║     ██║   ██║██╔██╗ ██║██║  ███╗       ██║   ███████║██████╔╝
-//  ██║     ██║   ██║██║╚██╗██║██║   ██║       ██║   ██╔══██║██╔══██╗
-//  ███████╗╚██████╔╝██║ ╚████║╚██████╔╝       ██║   ██║  ██║██████╔╝
-//  ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝        ╚═╝   ╚═╝  ╚═╝╚═════╝
+//  DCA LONG MODE
 // ══════════════════════════════════════════════════════════════
-let L_state = null;
-let L_pnlChart = null;
-let L_filled = [];
-
+let L_state = null; let L_pnlChart = null; let L_filled = [];
 function L_g(id) { return document.getElementById(id); }
 
 function L_calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
@@ -463,8 +446,7 @@ function L_calcDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct) {
     prices.push(p); sizes.push(s); kls.push(kl); coins.push(kl/p);
   }
   const totalKl=kls.reduce((a,b)=>a+b,0), totalCoins=coins.reduce((a,b)=>a+b,0);
-  const newEntry=totalKl/totalCoins, liq=newEntry - budget/totalCoins;
-  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry:totalKl/totalCoins,fee:totalKl*feeRate,feeRate};
 }
 
 function L_calcShortDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct, longSize1) {
@@ -478,77 +460,70 @@ function L_calcShortDCA(e1, n, leverage, budget, pct_drop, size_mult, offset_pct
     prices.push(p); sizes.push(s); kls.push(kl); coins.push(kl/p);
   }
   const totalKl=kls.reduce((a,b)=>a+b,0), totalCoins=coins.reduce((a,b)=>a+b,0);
-  const newEntry=totalKl/totalCoins;
-  const liq = newEntry + budget/totalCoins;
-  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry:totalKl/totalCoins,fee:totalKl*feeRate,feeRate};
 }
 
 function L_getFilledSummary() {
-  if (!L_state) return {lf:null,sf:null,liLong:[],liShort:[]};
-  const {long,short,n_long,n_short,budget} = L_state;
+  if (!L_state) return {lf:null,sf:null,liLong:[],liShort:[],crossLiq:null};
+  const {long,short,n_long,n_short,balance} = L_state;
   const feeRate = long.feeRate;
-  function aggLong(src,indices) {
+  function agg(src,indices) {
     if (!indices.length) return null;
     const totalKl=indices.reduce((a,i)=>a+src.kls[i],0), totalCoins=indices.reduce((a,i)=>a+src.coins[i],0);
-    const newEntry=totalKl/totalCoins, liq=newEntry-budget/totalCoins;
-    return {totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate};
-  }
-  function aggShort(src,indices) {
-    if (!indices.length) return null;
-    const totalKl=indices.reduce((a,i)=>a+src.kls[i],0), totalCoins=indices.reduce((a,i)=>a+src.coins[i],0);
-    const newEntry=totalKl/totalCoins, liq=newEntry+budget/totalCoins;
-    return {totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate};
+    return {totalKl,totalCoins,newEntry:totalKl/totalCoins,fee:totalKl*feeRate};
   }
   const liLong=Array.from({length:n_long},(_,i)=>i).filter(i=>L_filled[i]);
   const liShort=Array.from({length:n_short},(_,i)=>i).filter(i=>L_filled[n_long+i]);
-  return {lf:aggLong(long,liLong),sf:aggShort(short,liShort),liLong,liShort};
+  const lf=agg(long,liLong), sf=agg(short,liShort);
+
+  let crossLiq = null;
+  let cL = lf ? lf.totalCoins : 0, cS = sf ? sf.totalCoins : 0;
+  if (cL > 0 || cS > 0) {
+    let klL = lf ? lf.totalKl : 0, klS = sf ? sf.totalKl : 0;
+    let fee = (lf ? lf.fee : 0) + (sf ? sf.fee : 0);
+    let netBal = balance - fee;
+    let mmr = 0.004; // Tier 1 Binance (0.4%)
+    let den = cL - cS - (cL + cS) * mmr;
+    if (den !== 0) {
+      let liq = (klL - klS - netBal) / den;
+      if (liq > 0) crossLiq = liq;
+    }
+  }
+  return {lf,sf,liLong,liShort,crossLiq};
 }
 
 function L_calculate() {
-  const coin=L_g('L_coin').value||'SYMBOL', balance=+L_g('L_balance').value,
-        budget=+L_g('L_budget').value, leverage=+L_g('L_leverage').value,
-        e1=+L_g('L_entry1').value, pct_drop=+L_g('L_pct_drop').value,
-        n_long=+L_g('L_n_long').value, n_short=+L_g('L_n_short').value,
-        short_offset=+L_g('L_short_offset').value, size_mult=+L_g('L_size_mult').value;
+  const coin=L_g('L_coin').value||'SYMBOL', balance=+L_g('L_balance').value, budget=+L_g('L_budget').value, leverage=+L_g('L_leverage').value, e1=+L_g('L_entry1').value, pct_drop=+L_g('L_pct_drop').value, n_long=+L_g('L_n_long').value, n_short=+L_g('L_n_short').value, short_offset=+L_g('L_short_offset').value, size_mult=+L_g('L_size_mult').value;
   const long=L_calcDCA(e1,n_long,leverage,budget,pct_drop,size_mult,0);
   const short=L_calcShortDCA(e1,n_short,leverage,budget,pct_drop,size_mult,short_offset,long.sizes[0]);
   L_state={coin,balance,budget,leverage,e1,pct_drop,n_long,n_short,long,short,size_mult};
   L_filled=new Array(n_long+n_short).fill(true);
-  L_g('L_results').style.display='block';
-  L_g('L_sim-price').value=e1;
-  L_g('L_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  L_g('L_results').style.display='block'; L_g('L_sim-price').value=e1; L_g('L_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
   L_onLivePrice(); L_renderTable(); L_updateStats(); L_drawChart();
 }
 
 function L_renderTable() {
-  const {long,short,n_long,n_short}=L_state;
-  const {lf,sf,liLong,liShort}=L_getFilledSummary();
+  const {long,short,n_long,n_short}=L_state; const {lf,sf,liLong,liShort}=L_getFilledSummary();
   let h=`<tr><th>Khớp</th><th>Lệnh</th><th>Giá vào</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr>`;
   const tickSvg=(clr)=>`<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   let cumKl=0;
   for(let i=0;i<n_long;i++){
-    const idx=i,on=L_filled[idx];
-    if(on)cumKl+=long.kls[i];
-    const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';
+    const idx=i,on=L_filled[idx]; if(on)cumKl+=long.kls[i]; const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';
     h+=`<tr class="${rc}" id="L_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="L_toggleFill(${idx})">${on?tickSvg('#00e5a0'):''}</div></div></td><td>Long ${i+1} <span class="tag tag-l">L</span></td><td>${long.prices[i].toFixed(6)}</td><td>${long.sizes[i].toFixed(4)}</td><td>${long.kls[i].toFixed(4)}</td><td>${long.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;
   }
-  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;
-  cumKl=0;
+  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`; cumKl=0;
   for(let i=0;i<n_short;i++){
-    const idx=n_long+i,on=L_filled[idx];
-    if(on)cumKl+=short.kls[i];
-    const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';
+    const idx=n_long+i,on=L_filled[idx]; if(on)cumKl+=short.kls[i]; const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';
     h+=`<tr class="${rc}" id="L_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="L_toggleFill(${idx})">${on?tickSvg('#ff4d6a'):''}</div></div></td><td>Short ${i+1} <span class="tag tag-s">S</span></td><td>${short.prices[i].toFixed(6)}</td><td>${short.sizes[i].toFixed(4)}</td><td>${short.kls[i].toFixed(4)}</td><td>${short.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;
   }
   const lSz=lf?liLong.reduce((a,i)=>a+long.sizes[i],0):0, sSz=sf?liShort.reduce((a,i)=>a+short.sizes[i],0):0;
   h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Long (${liLong.length}/${n_long})</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
   h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Short (${liShort.length}/${n_short})</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
   L_g('L_entry-table').innerHTML=h;
-  const nL=L_filled.slice(0,n_long).filter(Boolean).length, nS=L_filled.slice(n_long).filter(Boolean).length;
-  L_g('L_fill-count').innerHTML=`Đã khớp: <span>${nL} Long + ${nS} Short</span> / ${n_long+n_short} lệnh`;
+  L_g('L_fill-count').innerHTML=`Đã khớp: <span>${liLong.length} Long + ${liShort.length} Short</span> / ${n_long+n_short} lệnh`;
 }
 
-function L_toggleFill(idx){L_filled[idx]=!L_filled[idx];L_renderTable();L_updateStats();L_onLivePrice();if(L_g('L_tab-chart').classList.contains('active'))L_drawChart();if(L_g('L_sim-result').innerHTML.trim()!=='')L_simulate();}
+function L_toggleFill(idx){L_filled[idx]=!L_filled[idx];L_afterSelect();}
 function L_selectAll(){L_filled=new Array(L_state.n_long+L_state.n_short).fill(true);L_afterSelect();}
 function L_selectNone(){L_filled=new Array(L_state.n_long+L_state.n_short).fill(false);L_afterSelect();}
 function L_selectLongOnly(){L_filled=L_filled.map((_,i)=>i<L_state.n_long);L_afterSelect();}
@@ -556,123 +531,133 @@ function L_selectShortOnly(){L_filled=L_filled.map((_,i)=>i>=L_state.n_long);L_a
 function L_afterSelect(){L_renderTable();L_updateStats();L_onLivePrice();if(L_g('L_tab-chart').classList.contains('active'))L_drawChart();if(L_g('L_sim-result').innerHTML.trim()!=='')L_simulate();}
 
 function L_updateStats(){
-  const {lf,sf,liLong}=L_getFilledSummary();
-  const {long,e1}=L_state;
+  const {lf,sf,liLong,crossLiq}=L_getFilledSummary(); const {long,e1}=L_state;
   const firstLongPrice=liLong.length?long.prices[liLong[0]]:e1;
-  const liqDropPct=lf?((firstLongPrice-lf.liq)/firstLongPrice*100):0;
+  let liqMsg="—", liqClass="muted", subLiq="", cL = lf?lf.totalCoins:0, cS = sf?sf.totalCoins:0;
+  
+  if (cL===0 && cS===0) { }
+  else if (!crossLiq) { liqMsg="Hedged"; liqClass="g"; subLiq="An toàn"; }
+  else {
+    liqMsg = crossLiq.toFixed(4); liqClass = "r";
+    if (cL > cS) { subLiq = 'giảm ' + ((firstLongPrice - crossLiq)/firstLongPrice*100).toFixed(1) + '%'; } 
+    else { subLiq = 'tăng ' + ((crossLiq - e1)/e1*100).toFixed(1) + '%'; }
+  }
+
   L_g('L_stat-row').innerHTML=`
     <div class="stat"><div class="lbl">New Entry Long</div><div class="val b">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
     <div class="stat"><div class="lbl">New Entry Short</div><div class="val a">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
-    <div class="stat"><div class="lbl">Liq Long</div><div class="val r">${lf?lf.liq.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?'giảm '+liqDropPct.toFixed(1)+'%':''}</div></div>
+    <div class="stat"><div class="lbl">Giá Cháy (Cross)</div><div class="val ${liqClass}">${liqMsg}</div><div class="sub-val">${subLiq}</div></div>
     <div class="stat"><div class="lbl">Tổng KL khớp</div><div class="val">${((lf?lf.totalKl:0)+(sf?sf.totalKl:0)).toFixed(2)}</div><div class="sub-val">USDT position</div></div>`;
-  L_updateRisk(lf,sf);
+  L_updateRisk(lf,sf,crossLiq,cL,cS);
 }
 
-function L_updateRisk(lf,sf){
-  const {balance,leverage,size_mult}=L_state;
-  const mL=lf?lf.totalKl/leverage:0,mS=sf?sf.totalKl/leverage:0,mT=mL+mS,rp=mT/balance*100;
-  const liqPct=lf?((lf.newEntry-lf.liq)/lf.newEntry*100):0;
+function L_updateRisk(lf,sf,crossLiq,cL,cS){
+  const {balance,leverage}=L_state;
+  const mL=lf?lf.totalKl/leverage:0, mS=sf?sf.totalKl/leverage:0, mT=mL+mS, rp=mT/balance*100;
+  let liqPct = 0;
+  if (crossLiq && (cL>0||cS>0)) {
+    if (cL>cS && lf) liqPct = (lf.newEntry - crossLiq)/lf.newEntry*100;
+    else if (cS>cL && sf) liqPct = (crossLiq - sf.newEntry)/sf.newEntry*100;
+  }
+  
   L_g('L_risk-content').innerHTML=`<div class="result-box">
     <div class="result-row"><span class="k">Margin Long</span><span class="v b">${mL.toFixed(2)} USDT</span></div>
     <div class="result-row"><span class="k">Margin Short</span><span class="v a">${mS.toFixed(2)} USDT</span></div>
     <div class="result-row"><span class="k">Tổng Margin</span><span class="v">${mT.toFixed(2)} USDT</span></div>
     <div class="result-row"><span class="k">% Balance sử dụng</span><span class="v ${rp>80?'r':rp>50?'a':'g'}">${rp.toFixed(1)}%</span></div>
-    <div class="result-row"><span class="k">Giá thanh lý Long</span><span class="v r">${lf?lf.liq.toFixed(6):'—'}</span></div>
-    <div class="result-row"><span class="k">% giảm đến liq</span><span class="v r">${lf?'-'+liqPct.toFixed(2)+'%':'—'}</span></div>
+    <div class="result-row"><span class="k">Giá thanh lý (Cross)</span><span class="v ${!crossLiq?'g':'r'}">${crossLiq?crossLiq.toFixed(6):'Không cháy (Hedged)'}</span></div>
+    <div class="result-row"><span class="k">% cách giá cháy</span><span class="v r">${crossLiq?(cL>cS?'-':'+')+liqPct.toFixed(2)+'%':'—'}</span></div>
     <div class="result-row"><span class="k">Phí Long</span><span class="v a">${lf?lf.fee.toFixed(4):'0.0000'} USDT</span></div>
     <div class="result-row"><span class="k">Phí Short</span><span class="v a">${sf?sf.fee.toFixed(4):'0.0000'} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((lf?lf.fee:0)+(sf?sf.fee:0)).toFixed(4)} USDT</span></div>
   </div>
   ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
-  ${lf&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — nên giảm đòn bẩy.</div>`:''}
-  <div class="warn" style="margin-top:8px">ℹ Martingale x${size_mult}: size tăng theo lũy thừa. Tổng exposure tăng mạnh khi vào nhiều lệnh.</div>`;
+  ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
+  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin dùng chung Balance. Tỷ lệ MMR mặc định: 0.4%.</div>`;
 }
 
 function L_onLivePrice(){
-  if(!L_state)return;
-  const p=parseFloat(L_g('L_live-price').value);
-  const {lf,sf,liLong,liShort}=L_getFilledSummary();
-  const {long,short,n_long,balance,leverage,e1}=L_state;
+  if(!L_state)return; const p=parseFloat(L_g('L_live-price').value);
+  const {lf,sf,crossLiq}=L_getFilledSummary(); const {long,n_long,balance,leverage,e1}=L_state;
   L_g('L_live-coin-tag').textContent=(L_state.coin||'USDT').replace(/USDT$/,'')+'/USDT';
   if(isNaN(p)||p<=0){
     ['L_ls-pnl-long','L_ls-pnl-short','L_ls-pnl-total','L_ls-drop-range','L_ls-position'].forEach(id=>{const el=L_g(id);el.className='ls-val muted';el.textContent='—';});
     ['L_ls-ror-long','L_ls-ror-short','L_ls-dw','L_ls-drop-cur','L_ls-vs-entry'].forEach(id=>L_g(id).textContent='');
     L_g('L_live-progress').style.display='none'; return;
   }
-  const plRaw=lf?(p-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
-  const psRaw=sf?(sf.newEntry-p)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
-  const total=plNet+psNet,rorL=lf?plNet/(lf.totalKl/leverage)*100:0,rorS=sf?psNet/(sf.totalKl/leverage)*100:0,dw=balance+total;
-  const elPL=L_g('L_ls-pnl-long');
-  if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';L_g('L_ls-ror-long').textContent=fmt(rorL,1)+'%';}
-  else{elPL.className='ls-val muted';elPL.textContent='—';L_g('L_ls-ror-long').textContent='';}
-  const elPS=L_g('L_ls-pnl-short');
-  if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';L_g('L_ls-ror-short').textContent=fmt(rorS,1)+'%';}
-  else{elPS.className='ls-val muted';elPS.textContent='—';L_g('L_ls-ror-short').textContent='';}
-  const elPT=L_g('L_ls-pnl-total');
-  if(lf||sf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=L_g('L_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}
-  else{elPT.className='ls-val muted';elPT.textContent='—';L_g('L_ls-dw').textContent='';}
-  const firstEntry=long.prices[0],lastEntry=long.prices[n_long-1];
+  const plRaw=lf?(p-lf.newEntry)*lf.totalCoins:0, plNet=lf?plRaw-lf.fee:0;
+  const psRaw=sf?(sf.newEntry-p)*sf.totalCoins:0, psNet=sf?psRaw-sf.fee:0;
+  const total=plNet+psNet, rorL=lf?plNet/(lf.totalKl/leverage)*100:0, rorS=sf?psNet/(sf.totalKl/leverage)*100:0, dw=balance+total;
+  
+  const elPL=L_g('L_ls-pnl-long'); if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';L_g('L_ls-ror-long').textContent=fmt(rorL,1)+'%';}else{elPL.className='ls-val muted';elPL.textContent='—';L_g('L_ls-ror-long').textContent='';}
+  const elPS=L_g('L_ls-pnl-short'); if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';L_g('L_ls-ror-short').textContent=fmt(rorS,1)+'%';}else{elPS.className='ls-val muted';elPS.textContent='—';L_g('L_ls-ror-short').textContent='';}
+  const elPT=L_g('L_ls-pnl-total'); if(lf||sf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=L_g('L_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}else{elPT.className='ls-val muted';elPT.textContent='—';L_g('L_ls-dw').textContent='';}
+  
+  const firstEntry=long.prices[0], lastEntry=long.prices[n_long-1];
   const dropRange=(firstEntry-lastEntry)/firstEntry*100;
   const elDR=L_g('L_ls-drop-range');elDR.className='ls-val a';elDR.textContent='-'+dropRange.toFixed(2)+'%';
   const dropCur=(firstEntry-p)/firstEntry*100,elDC=L_g('L_ls-drop-cur');
-  if(dropCur>0){elDC.textContent='Giá giảm '+dropCur.toFixed(2)+'% từ L1';elDC.style.color='var(--red)';}
-  else if(dropCur<0){elDC.textContent='Giá tăng '+Math.abs(dropCur).toFixed(2)+'% từ L1';elDC.style.color='var(--green)';}
-  else{elDC.textContent='Đang ở Entry 1';elDC.style.color='var(--muted)';}
+  if(dropCur>0){elDC.textContent='Giá giảm '+dropCur.toFixed(2)+'% từ L1';elDC.style.color='var(--red)';}else if(dropCur<0){elDC.textContent='Giá tăng '+Math.abs(dropCur).toFixed(2)+'% từ L1';elDC.style.color='var(--green)';}else{elDC.textContent='Đang ở Entry 1';elDC.style.color='var(--muted)';}
+  
   const elPos=L_g('L_ls-position'),elVsE=L_g('L_ls-vs-entry');
+  let isLiq = false; let cL = lf ? lf.totalCoins : 0, cS = sf ? sf.totalCoins : 0;
+  if (crossLiq) { if (cL > cS && p <= crossLiq) isLiq = true; if (cS > cL && p >= crossLiq) isLiq = true; }
+
   let zone='',zoneClass='ls-val b';
-  if(p>firstEntry){zone='Trên Entry L1';zoneClass='ls-val g';elVsE.textContent='+'+((p-firstEntry)/firstEntry*100).toFixed(2)+'% vs L1';elVsE.style.color='var(--green)';}
-  else if(lf&&p<=lf.liq){zone='⚠ Liq Zone';zoneClass='ls-val r';elVsE.textContent='Bị thanh lý!';elVsE.style.color='var(--red)';}
+  if(isLiq){zone='⚠ Liq Zone';zoneClass='ls-val r';elVsE.textContent='Bị thanh lý!';elVsE.style.color='var(--red)';}
+  else if(p>firstEntry){zone='Trên Entry L1';zoneClass='ls-val g';elVsE.textContent='+'+((p-firstEntry)/firstEntry*100).toFixed(2)+'% vs L1';elVsE.style.color='var(--green)';}
   else{
     let level=n_long;for(let i=0;i<n_long;i++){if(p>=long.prices[i]){level=i;break;}}
-    if(level===0){zone='Entry 1 Long';zoneClass='ls-val b';}
-    else if(level<n_long){zone='DCA L'+level+'→L'+(level+1);zoneClass='ls-val a';}
-    else{zone='Dưới L'+n_long;zoneClass='ls-val r';}
-    if(lf){const vsNE=(p-lf.newEntry)/lf.newEntry*100;elVsE.textContent=fmt(vsNE,2)+'% vs new entry';elVsE.style.color=vsNE>=0?'var(--green)':'var(--red)';}
-    else elVsE.textContent='';
+    if(level===0){zone='Entry 1 Long';zoneClass='ls-val b';}else if(level<n_long){zone='DCA L'+level+'→L'+(level+1);zoneClass='ls-val a';}else{zone='Dưới L'+n_long;zoneClass='ls-val r';}
+    if(lf){const vsNE=(p-lf.newEntry)/lf.newEntry*100;elVsE.textContent=fmt(vsNE,2)+'% vs new entry';elVsE.style.color=vsNE>=0?'var(--green)':'var(--red)';}else elVsE.textContent='';
   }
   elPos.className=zoneClass;elPos.textContent=zone;
+  
   L_g('L_live-progress').style.display='block';
-  const pgLeft=lf?Math.min(lf.liq*0.95,lastEntry*0.95):lastEntry*0.9,pgRight=firstEntry*1.05;
+  L_g('L_pg-center').textContent=crossLiq?'Liq: '+crossLiq.toFixed(4):'';
+  const pgLeft=crossLiq && cL>cS ? Math.min(crossLiq*0.95,lastEntry*0.95):lastEntry*0.9;
+  const pgRight=crossLiq && cS>cL ? Math.max(crossLiq*1.05,firstEntry*1.05):firstEntry*1.05;
   const pct=Math.max(0,Math.min(100,(p-pgLeft)/(pgRight-pgLeft)*100));
-  const liqPct2=lf?Math.max(0,Math.min(100,(lf.liq-pgLeft)/(pgRight-pgLeft)*100)):-1;
+  const liqPct2=crossLiq?Math.max(0,Math.min(100,(crossLiq-pgLeft)/(pgRight-pgLeft)*100)):-1;
+  
   L_g('L_pg-left').textContent=pgLeft.toFixed(4);L_g('L_pg-right').textContent=pgRight.toFixed(4);
-  L_g('L_pg-center').textContent=lf?'Liq: '+lf.liq.toFixed(4):'';
   const fill=L_g('L_pg-fill');fill.style.width=pct+'%';fill.className='progress-bar-fill'+(pct<30?' danger':'');
   const marker=L_g('L_pg-marker');marker.style.left=pct+'%';marker.style.background=total>=0?'var(--green)':'var(--red)';
   const liqM=L_g('L_pg-liq');if(liqPct2>=0){liqM.style.display='block';liqM.style.left=liqPct2+'%';}else liqM.style.display='none';
 }
 
 function L_simulate(){
-  if(!L_state)return;
-  const exitPrice=parseFloat(L_g('L_sim-price').value);
+  if(!L_state)return; const exitPrice=parseFloat(L_g('L_sim-price').value);
   if(isNaN(exitPrice)||exitPrice<=0)return;
-  const {balance,leverage}=L_state;
-  const {lf,sf,liLong,liShort}=L_getFilledSummary();
+  const {balance,leverage}=L_state; const {lf,sf,liLong,liShort,crossLiq}=L_getFilledSummary();
   if(!lf&&!sf){L_g('L_sim-result').innerHTML=`<div class="empty-msg">⬅ Chưa có lệnh nào được tick khớp.<br>Hãy tick ít nhất 1 lệnh trong tab "Lệnh vào".</div>`;return;}
-  const plRaw=lf?(exitPrice-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
-  const psRaw=sf?(sf.newEntry-exitPrice)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
-  const total=plNet+psNet,dw=balance+total,rorL=lf?plNet/(lf.totalKl/leverage)*100:0,rorS=sf?psNet/(sf.totalKl/leverage)*100:0;
-  const liqHit=lf&&exitPrice<=lf.liq;
+  
+  const plRaw=lf?(exitPrice-lf.newEntry)*lf.totalCoins:0, plNet=lf?plRaw-lf.fee:0;
+  const psRaw=sf?(sf.newEntry-exitPrice)*sf.totalCoins:0, psNet=sf?psRaw-sf.fee:0;
+  const total=plNet+psNet, dw=balance+total, rorL=lf?plNet/(lf.totalKl/leverage)*100:0, rorS=sf?psNet/(sf.totalKl/leverage)*100:0;
+  
+  let cL = lf?lf.totalCoins:0, cS = sf?sf.totalCoins:0; let liqHit = false;
+  if (crossLiq) { if (cL > cS && exitPrice <= crossLiq) liqHit = true; if (cS > cL && exitPrice >= crossLiq) liqHit = true; }
+
   L_g('L_sim-result').innerHTML=`<div class="result-box">
     <div class="result-row"><span class="k">Giá exit</span><span class="v b">${exitPrice.toFixed(6)}</span></div>
     <div class="result-row"><span class="k">Lệnh tính</span><span style="font-size:11px">${liLong.length?`<span style="color:var(--green)">${liLong.length} Long</span>`:''} ${liLong.length&&liShort.length?'+':''} ${liShort.length?`<span style="color:var(--red)">${liShort.length} Short</span>`:''}</span></div>
     <div class="sep"></div>
-    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
     <div class="sep"></div>
-    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
     <div class="sep"></div>
     <div class="result-row"><span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
     <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((lf?lf.fee:0)+(sf?sf.fee:0),4)} USDT</span></div>
   </div>
-  ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} ≤ Liq Long (${lf.liq.toFixed(4)}) → LONG bị thanh lý!</div>`:''}`;
+  ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} vượt ngưỡng Cross Liq (${crossLiq.toFixed(4)}) → VỊ THẾ ĐÃ CHÁY!</div>`:''}`;
 }
 
 function L_drawChart(){
-  if(!L_state)return;
-  const {e1}=L_state,{lf,sf}=L_getFilledSummary();
+  if(!L_state)return; const {e1}=L_state,{lf,sf,crossLiq}=L_getFilledSummary();
   if(!lf&&!sf){if(L_pnlChart){L_pnlChart.destroy();L_pnlChart=null;}L_g('L_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
-  const refLiq=lf?lf.liq:(sf?sf.newEntry*0.5:e1*0.5);
+  const refLiq=crossLiq ? crossLiq : e1*0.5;
   const priceMin=Math.max(refLiq*0.6,0.0001),priceMax=e1*1.35,steps=120;
   const labels=[],ldArr=[],sdArr=[],tdArr=[];
   for(let i=0;i<=steps;i++){const p=priceMin+(priceMax-priceMin)*i/steps;labels.push(p.toFixed(4));const pl=lf?(p-lf.newEntry)*lf.totalCoins-lf.fee:0,ps=sf?(sf.newEntry-p)*sf.totalCoins-sf.fee:0;if(lf)ldArr.push(+pl.toFixed(2));if(sf)sdArr.push(+ps.toFixed(2));tdArr.push(+(pl+ps).toFixed(2));}
@@ -695,17 +680,9 @@ function L_switchTab(name){
 }
 
 // ══════════════════════════════════════════════════════════════
-//  ███████╗██╗  ██╗ ██████╗ ██████╗ ████████╗    ████████╗ █████╗ ██████╗
-//  ██╔════╝██║  ██║██╔═══██╗██╔══██╗╚══██╔══╝       ██╔══╝██╔══██╗██╔══██╗
-//  ███████╗███████║██║   ██║██████╔╝   ██║           ██║   ███████║██████╔╝
-//  ╚════██║██╔══██║██║   ██║██╔══██╗   ██║           ██║   ██╔══██║██╔══██╗
-//  ███████║██║  ██║╚██████╔╝██║  ██║   ██║           ██║   ██║  ██║██████╔╝
-//  ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝           ╚═╝   ╚═╝  ╚═╝╚═════╝
+//  DCA SHORT MODE
 // ══════════════════════════════════════════════════════════════
-let S_state = null;
-let S_pnlChart = null;
-let S_filled = [];
-
+let S_state = null; let S_pnlChart = null; let S_filled = [];
 function S_g(id) { return document.getElementById(id); }
 
 function S_calcShortDCA(e1,n,leverage,budget,pct_rise,size_mult){
@@ -714,8 +691,8 @@ function S_calcShortDCA(e1,n,leverage,budget,pct_rise,size_mult){
   const sumS=series.reduce((a,b)=>a+b,0),base=budget/(2*sumS);
   const prices=[],sizes=[],kls=[],coins=[];
   for(let i=0;i<n;i++){const p=e1*Math.pow(1+pct_rise/100,i),s=base*Math.pow(size_mult,i),kl=s*leverage;prices.push(p);sizes.push(s);kls.push(kl);coins.push(kl/p);}
-  const totalKl=kls.reduce((a,b)=>a+b,0),totalCoins=coins.reduce((a,b)=>a+b,0),newEntry=totalKl/totalCoins,liq=newEntry+budget/totalCoins;
-  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+  const totalKl=kls.reduce((a,b)=>a+b,0),totalCoins=coins.reduce((a,b)=>a+b,0);
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry:totalKl/totalCoins,fee:totalKl*feeRate,feeRate};
 }
 
 function S_calcLongDCA(e1,n,leverage,budget,pct_rise,size_mult,offset_pct,shortSize1){
@@ -723,31 +700,45 @@ function S_calcLongDCA(e1,n,leverage,budget,pct_rise,size_mult,offset_pct,shortS
   const longBase=shortSize1/2;
   const prices=[],sizes=[],kls=[],coins=[];
   for(let i=0;i<n;i++){const p=e1*(1+offset_pct/100)*Math.pow(1+pct_rise/100,i),s=longBase*Math.pow(2,i),kl=s*leverage;prices.push(p);sizes.push(s);kls.push(kl);coins.push(kl/p);}
-  const totalKl=kls.reduce((a,b)=>a+b,0),totalCoins=coins.reduce((a,b)=>a+b,0),newEntry=totalKl/totalCoins,liq=newEntry-budget/totalCoins;
-  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry,liq,fee:totalKl*feeRate,feeRate};
+  const totalKl=kls.reduce((a,b)=>a+b,0),totalCoins=coins.reduce((a,b)=>a+b,0);
+  return {prices,sizes,kls,coins,totalKl,totalCoins,newEntry:totalKl/totalCoins,fee:totalKl*feeRate,feeRate};
 }
 
 function S_getFilledSummary(){
-  if(!S_state)return{sf:null,lf:null,liShort:[],liLong:[]};
-  const{short,long,n_short,n_long,budget}=S_state,feeRate=short.feeRate;
-  function aggShort(src,indices){if(!indices.length)return null;const tKl=indices.reduce((a,i)=>a+src.kls[i],0),tC=indices.reduce((a,i)=>a+src.coins[i],0),nE=tKl/tC,liq=nE+budget/tC;return{totalKl:tKl,totalCoins:tC,newEntry:nE,liq,fee:tKl*feeRate};}
-  function aggLong(src,indices){if(!indices.length)return null;const tKl=indices.reduce((a,i)=>a+src.kls[i],0),tC=indices.reduce((a,i)=>a+src.coins[i],0),nE=tKl/tC,liq=nE-budget/tC;return{totalKl:tKl,totalCoins:tC,newEntry:nE,liq,fee:tKl*feeRate};}
+  if(!S_state)return{sf:null,lf:null,liShort:[],liLong:[],crossLiq:null};
+  const{short,long,n_short,n_long,balance}=S_state, feeRate=short.feeRate;
+  function agg(src,indices){
+    if(!indices.length)return null;
+    const tKl=indices.reduce((a,i)=>a+src.kls[i],0),tC=indices.reduce((a,i)=>a+src.coins[i],0);
+    return{totalKl:tKl,totalCoins:tC,newEntry:tKl/tC,fee:tKl*feeRate};
+  }
   const liShort=Array.from({length:n_short},(_,i)=>i).filter(i=>S_filled[i]);
   const liLong=Array.from({length:n_long},(_,i)=>i).filter(i=>S_filled[n_short+i]);
-  return{sf:aggShort(short,liShort),lf:aggLong(long,liLong),liShort,liLong};
+  const sf=agg(short,liShort), lf=agg(long,liLong);
+
+  let crossLiq = null;
+  let cL = lf ? lf.totalCoins : 0, cS = sf ? sf.totalCoins : 0;
+  if (cL > 0 || cS > 0) {
+    let klL = lf ? lf.totalKl : 0, klS = sf ? sf.totalKl : 0;
+    let fee = (lf ? lf.fee : 0) + (sf ? sf.fee : 0);
+    let netBal = balance - fee;
+    let mmr = 0.004; // Tier 1 Binance (0.4%)
+    let den = cL - cS - (cL + cS) * mmr;
+    if (den !== 0) {
+      let liq = (klL - klS - netBal) / den;
+      if (liq > 0) crossLiq = liq;
+    }
+  }
+  return{sf,lf,liShort,liLong,crossLiq};
 }
 
 function S_calculate(){
-  const coin=S_g('S_coin').value||'SYMBOL',balance=+S_g('S_balance').value,budget=+S_g('S_budget').value,leverage=+S_g('S_leverage').value;
-  const e1=+S_g('S_entry1').value,pct_rise=+S_g('S_pct_rise').value,n_short=+S_g('S_n_short').value,n_long=+S_g('S_n_long').value;
-  const long_offset=+S_g('S_long_offset').value,size_mult=+S_g('S_size_mult').value;
+  const coin=S_g('S_coin').value||'SYMBOL',balance=+S_g('S_balance').value,budget=+S_g('S_budget').value,leverage=+S_g('S_leverage').value,e1=+S_g('S_entry1').value,pct_rise=+S_g('S_pct_rise').value,n_short=+S_g('S_n_short').value,n_long=+S_g('S_n_long').value,long_offset=+S_g('S_long_offset').value,size_mult=+S_g('S_size_mult').value;
   const short=S_calcShortDCA(e1,n_short,leverage,budget,pct_rise,size_mult);
   const long=S_calcLongDCA(e1,n_long,leverage,budget,pct_rise,size_mult,long_offset,short.sizes[0]);
   S_state={coin,balance,budget,leverage,e1,pct_rise,n_short,n_long,short,long,size_mult};
   S_filled=new Array(n_short+n_long).fill(true);
-  S_g('S_results').style.display='block';
-  S_g('S_sim-price').value=e1;
-  S_g('S_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  S_g('S_results').style.display='block'; S_g('S_sim-price').value=e1; S_g('S_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
   S_onLivePrice();S_renderTable();S_updateStats();S_drawChart();
 }
 
@@ -757,18 +748,16 @@ function S_renderTable(){
   const tickSvg=(clr)=>`<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   let cumKl=0;
   for(let i=0;i<n_short;i++){const on=S_filled[i];if(on)cumKl+=short.kls[i];const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';h+=`<tr class="${rc}" id="S_row-${i}"><td><div class="chk"><div class="${cc}" onclick="S_toggleFill(${i})">${on?tickSvg('#ff4d6a'):''}</div></div></td><td>Short ${i+1} <span class="tag tag-s">S</span></td><td>${short.prices[i].toFixed(6)}</td><td>${short.sizes[i].toFixed(4)}</td><td>${short.kls[i].toFixed(4)}</td><td>${short.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;}
-  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;
-  cumKl=0;
+  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;cumKl=0;
   for(let i=0;i<n_long;i++){const idx=n_short+i,on=S_filled[idx];if(on)cumKl+=long.kls[i];const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';h+=`<tr class="${rc}" id="S_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="S_toggleFill(${idx})">${on?tickSvg('#00e5a0'):''}</div></div></td><td>Long ${i+1} <span class="tag tag-l">L</span></td><td>${long.prices[i].toFixed(6)}</td><td>${long.sizes[i].toFixed(4)}</td><td>${long.kls[i].toFixed(4)}</td><td>${long.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;}
   const sSz=sf?liShort.reduce((a,i)=>a+short.sizes[i],0):0,lSz=lf?liLong.reduce((a,i)=>a+long.sizes[i],0):0;
   h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Short (${liShort.length}/${n_short})</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
   h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Long (${liLong.length}/${n_long})</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
   S_g('S_entry-table').innerHTML=h;
-  const nS=S_filled.slice(0,n_short).filter(Boolean).length,nL=S_filled.slice(n_short).filter(Boolean).length;
-  S_g('S_fill-count').innerHTML=`Đã khớp: <span>${nS} Short + ${nL} Long</span> / ${n_short+n_long} lệnh`;
+  S_g('S_fill-count').innerHTML=`Đã khớp: <span>${liShort.length} Short + ${liLong.length} Long</span> / ${n_short+n_long} lệnh`;
 }
 
-function S_toggleFill(idx){S_filled[idx]=!S_filled[idx];S_renderTable();S_updateStats();S_onLivePrice();if(S_g('S_tab-chart').classList.contains('active'))S_drawChart();if(S_g('S_sim-result').innerHTML.trim()!=='')S_simulate();}
+function S_toggleFill(idx){S_filled[idx]=!S_filled[idx];S_afterSelect();}
 function S_selectAll(){S_filled=new Array(S_state.n_short+S_state.n_long).fill(true);S_afterSelect();}
 function S_selectNone(){S_filled=new Array(S_state.n_short+S_state.n_long).fill(false);S_afterSelect();}
 function S_selectShortOnly(){S_filled=S_filled.map((_,i)=>i<S_state.n_short);S_afterSelect();}
@@ -776,122 +765,132 @@ function S_selectLongOnly(){S_filled=S_filled.map((_,i)=>i>=S_state.n_short);S_a
 function S_afterSelect(){S_renderTable();S_updateStats();S_onLivePrice();if(S_g('S_tab-chart').classList.contains('active'))S_drawChart();if(S_g('S_sim-result').innerHTML.trim()!=='')S_simulate();}
 
 function S_updateStats(){
-  const{sf,lf,liShort}=S_getFilledSummary(),{short,e1}=S_state;
+  const{sf,lf,liShort,crossLiq}=S_getFilledSummary(),{short,e1}=S_state;
   const firstShortPrice=liShort.length?short.prices[liShort[0]]:e1;
-  const liqRisePct=sf?((sf.liq-firstShortPrice)/firstShortPrice*100):0;
+  let liqMsg="—", liqClass="muted", subLiq="", cL = lf?lf.totalCoins:0, cS = sf?sf.totalCoins:0;
+  
+  if (cL===0 && cS===0) { }
+  else if (!crossLiq) { liqMsg="Hedged"; liqClass="g"; subLiq="An toàn"; }
+  else {
+    liqMsg = crossLiq.toFixed(4); liqClass = "r";
+    if (cS > cL) { subLiq = 'tăng ' + ((crossLiq - firstShortPrice)/firstShortPrice*100).toFixed(1) + '%'; } 
+    else { subLiq = 'giảm ' + ((e1 - crossLiq)/e1*100).toFixed(1) + '%'; }
+  }
+
   S_g('S_stat-row').innerHTML=`
     <div class="stat"><div class="lbl">New Entry Short</div><div class="val r">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
     <div class="stat"><div class="lbl">New Entry Long</div><div class="val g">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
-    <div class="stat"><div class="lbl">Liq Short</div><div class="val r">${sf?sf.liq.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?'tăng +'+liqRisePct.toFixed(1)+'%':''}</div></div>
+    <div class="stat"><div class="lbl">Giá Cháy (Cross)</div><div class="val ${liqClass}">${liqMsg}</div><div class="sub-val">${subLiq}</div></div>
     <div class="stat"><div class="lbl">Tổng KL khớp</div><div class="val">${((sf?sf.totalKl:0)+(lf?lf.totalKl:0)).toFixed(2)}</div><div class="sub-val">USDT position</div></div>`;
-  S_updateRisk(sf,lf);
+  S_updateRisk(sf,lf,crossLiq,cL,cS);
 }
 
-function S_updateRisk(sf,lf){
-  const{balance,leverage,size_mult}=S_state;
-  const mS=sf?sf.totalKl/leverage:0,mL=lf?lf.totalKl/leverage:0,mT=mS+mL,rp=mT/balance*100;
-  const liqPct=sf?((sf.liq-sf.newEntry)/sf.newEntry*100):0;
+function S_updateRisk(sf,lf,crossLiq,cL,cS){
+  const{balance,leverage}=S_state;
+  const mS=sf?sf.totalKl/leverage:0, mL=lf?lf.totalKl/leverage:0, mT=mS+mL, rp=mT/balance*100;
+  let liqPct = 0;
+  if (crossLiq && (cL>0||cS>0)) {
+    if (cL>cS && lf) liqPct = (lf.newEntry - crossLiq)/lf.newEntry*100;
+    else if (cS>cL && sf) liqPct = (crossLiq - sf.newEntry)/sf.newEntry*100;
+  }
+  
   S_g('S_risk-content').innerHTML=`<div class="result-box">
     <div class="result-row"><span class="k">Margin Short</span><span class="v r">${mS.toFixed(2)} USDT</span></div>
     <div class="result-row"><span class="k">Margin Long</span><span class="v g">${mL.toFixed(2)} USDT</span></div>
     <div class="result-row"><span class="k">Tổng Margin</span><span class="v">${mT.toFixed(2)} USDT</span></div>
     <div class="result-row"><span class="k">% Balance sử dụng</span><span class="v ${rp>80?'r':rp>50?'a':'g'}">${rp.toFixed(1)}%</span></div>
-    <div class="result-row"><span class="k">Giá thanh lý Short</span><span class="v r">${sf?sf.liq.toFixed(6):'—'}</span></div>
-    <div class="result-row"><span class="k">% tăng đến liq Short</span><span class="v r">${sf?'+'+liqPct.toFixed(2)+'%':'—'}</span></div>
-    <div class="result-row"><span class="k">Giá thanh lý Long</span><span class="v g">${lf?lf.liq.toFixed(6):'—'}</span></div>
+    <div class="result-row"><span class="k">Giá thanh lý (Cross)</span><span class="v ${!crossLiq?'g':'r'}">${crossLiq?crossLiq.toFixed(6):'Không cháy (Hedged)'}</span></div>
+    <div class="result-row"><span class="k">% cách giá cháy</span><span class="v r">${crossLiq?(cL>cS?'-':'+')+liqPct.toFixed(2)+'%':'—'}</span></div>
     <div class="result-row"><span class="k">Phí Short</span><span class="v a">${sf?sf.fee.toFixed(4):'0.0000'} USDT</span></div>
     <div class="result-row"><span class="k">Phí Long</span><span class="v a">${lf?lf.fee.toFixed(4):'0.0000'} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((sf?sf.fee:0)+(lf?lf.fee:0)).toFixed(4)} USDT</span></div>
   </div>
   ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
-  ${sf&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq Short chỉ +${liqPct.toFixed(1)}% — nên giảm đòn bẩy.</div>`:''}
-  <div class="warn" style="margin-top:8px">ℹ Martingale ×${size_mult}: size tăng theo lũy thừa. Tổng exposure tăng mạnh khi vào nhiều lệnh.</div>`;
+  ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
+  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin dùng chung Balance. Tỷ lệ MMR mặc định: 0.4%.</div>`;
 }
 
 function S_onLivePrice(){
-  if(!S_state)return;
-  const p=parseFloat(S_g('S_live-price').value);
-  const{sf,lf,liShort,liLong}=S_getFilledSummary();
-  const{short,long,n_short,balance,leverage,e1}=S_state;
+  if(!S_state)return; const p=parseFloat(S_g('S_live-price').value);
+  const{sf,lf,crossLiq}=S_getFilledSummary(); const{short,n_short,balance,leverage,e1}=S_state;
   S_g('S_live-coin-tag').textContent=(S_state.coin||'USDT').replace(/USDT$/,'')+'/USDT';
   if(isNaN(p)||p<=0){
     ['S_ls-pnl-short','S_ls-pnl-long','S_ls-pnl-total','S_ls-rise-range','S_ls-position'].forEach(id=>{const el=S_g(id);el.className='ls-val muted';el.textContent='—';});
     ['S_ls-ror-short','S_ls-ror-long','S_ls-dw','S_ls-rise-cur','S_ls-vs-entry'].forEach(id=>S_g(id).textContent='');
     S_g('S_live-progress').style.display='none';return;
   }
-  const psRaw=sf?(sf.newEntry-p)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
-  const plRaw=lf?(p-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
-  const total=psNet+plNet,rorS=sf?psNet/(sf.totalKl/leverage)*100:0,rorL=lf?plNet/(lf.totalKl/leverage)*100:0,dw=balance+total;
-  const elPS=S_g('S_ls-pnl-short');
-  if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';S_g('S_ls-ror-short').textContent=fmt(rorS,1)+'%';}
-  else{elPS.className='ls-val muted';elPS.textContent='—';S_g('S_ls-ror-short').textContent='';}
-  const elPL=S_g('S_ls-pnl-long');
-  if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';S_g('S_ls-ror-long').textContent=fmt(rorL,1)+'%';}
-  else{elPL.className='ls-val muted';elPL.textContent='—';S_g('S_ls-ror-long').textContent='';}
-  const elPT=S_g('S_ls-pnl-total');
-  if(sf||lf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=S_g('S_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}
-  else{elPT.className='ls-val muted';elPT.textContent='—';S_g('S_ls-dw').textContent='';}
+  const psRaw=sf?(sf.newEntry-p)*sf.totalCoins:0, psNet=sf?psRaw-sf.fee:0;
+  const plRaw=lf?(p-lf.newEntry)*lf.totalCoins:0, plNet=lf?plRaw-lf.fee:0;
+  const total=psNet+plNet, rorS=sf?psNet/(sf.totalKl/leverage)*100:0, rorL=lf?plNet/(lf.totalKl/leverage)*100:0, dw=balance+total;
+  
+  const elPS=S_g('S_ls-pnl-short'); if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';S_g('S_ls-ror-short').textContent=fmt(rorS,1)+'%';}else{elPS.className='ls-val muted';elPS.textContent='—';S_g('S_ls-ror-short').textContent='';}
+  const elPL=S_g('S_ls-pnl-long'); if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';S_g('S_ls-ror-long').textContent=fmt(rorL,1)+'%';}else{elPL.className='ls-val muted';elPL.textContent='—';S_g('S_ls-ror-long').textContent='';}
+  const elPT=S_g('S_ls-pnl-total'); if(sf||lf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=S_g('S_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}else{elPT.className='ls-val muted';elPT.textContent='—';S_g('S_ls-dw').textContent='';}
+  
   const firstEntry=short.prices[0],lastEntry=short.prices[n_short-1];
   const riseRange=(lastEntry-firstEntry)/firstEntry*100;
   const elRR=S_g('S_ls-rise-range');elRR.className='ls-val a';elRR.textContent='+'+riseRange.toFixed(2)+'%';
   const riseCur=(p-firstEntry)/firstEntry*100,elRC=S_g('S_ls-rise-cur');
-  if(riseCur>0){elRC.textContent='Giá tăng '+riseCur.toFixed(2)+'% từ S1';elRC.style.color='var(--red)';}
-  else if(riseCur<0){elRC.textContent='Giá giảm '+Math.abs(riseCur).toFixed(2)+'% từ S1';elRC.style.color='var(--green)';}
-  else{elRC.textContent='Đang ở Entry S1';elRC.style.color='var(--muted)';}
+  if(riseCur>0){elRC.textContent='Giá tăng '+riseCur.toFixed(2)+'% từ S1';elRC.style.color='var(--red)';}else if(riseCur<0){elRC.textContent='Giá giảm '+Math.abs(riseCur).toFixed(2)+'% từ S1';elRC.style.color='var(--green)';}else{elRC.textContent='Đang ở Entry S1';elRC.style.color='var(--muted)';}
+  
   const elPos=S_g('S_ls-position'),elVsE=S_g('S_ls-vs-entry');
+  let isLiq = false; let cL = lf ? lf.totalCoins : 0, cS = sf ? sf.totalCoins : 0;
+  if (crossLiq) { if (cL > cS && p <= crossLiq) isLiq = true; if (cS > cL && p >= crossLiq) isLiq = true; }
+
   let zone='',zoneClass='ls-val b';
-  if(p<firstEntry){zone='Dưới Entry S1';zoneClass='ls-val g';elVsE.textContent=fmt((p-firstEntry)/firstEntry*100,2)+'% vs S1';elVsE.style.color='var(--green)';}
-  else if(sf&&p>=sf.liq){zone='⚠ Liq Zone';zoneClass='ls-val r';elVsE.textContent='Short bị thanh lý!';elVsE.style.color='var(--red)';}
+  if(isLiq){zone='⚠ Liq Zone';zoneClass='ls-val r';elVsE.textContent='Bị thanh lý!';elVsE.style.color='var(--red)';}
+  else if(p<firstEntry){zone='Dưới Entry S1';zoneClass='ls-val g';elVsE.textContent=fmt((p-firstEntry)/firstEntry*100,2)+'% vs S1';elVsE.style.color='var(--green)';}
   else{
     let level=n_short;for(let i=0;i<n_short;i++){if(p<=short.prices[i]){level=i;break;}}
-    if(level===0){zone='Entry S1';zoneClass='ls-val b';}
-    else if(level<n_short){zone='DCA S'+level+'→S'+(level+1);zoneClass='ls-val a';}
-    else{zone='Trên S'+n_short;zoneClass='ls-val r';}
-    if(sf){const vsNE=(p-sf.newEntry)/sf.newEntry*100;elVsE.textContent=fmt(vsNE,2)+'% vs new entry';elVsE.style.color=vsNE<=0?'var(--green)':'var(--red)';}
-    else elVsE.textContent='';
+    if(level===0){zone='Entry S1';zoneClass='ls-val b';}else if(level<n_short){zone='DCA S'+level+'→S'+(level+1);zoneClass='ls-val a';}else{zone='Trên S'+n_short;zoneClass='ls-val r';}
+    if(sf){const vsNE=(p-sf.newEntry)/sf.newEntry*100;elVsE.textContent=fmt(vsNE,2)+'% vs new entry';elVsE.style.color=vsNE<=0?'var(--green)':'var(--red)';}else elVsE.textContent='';
   }
   elPos.className=zoneClass;elPos.textContent=zone;
+  
   S_g('S_live-progress').style.display='block';
-  const pgLeft=firstEntry*0.95,pgRight=sf?sf.liq*1.05:lastEntry*1.05;
+  S_g('S_pg-center').textContent=crossLiq?'Liq: '+crossLiq.toFixed(4):'';
+  const pgLeft=firstEntry*0.95, pgRight=crossLiq && cS>cL ? Math.max(crossLiq*1.05, lastEntry*1.05) : lastEntry*1.05;
   const pct=Math.max(0,Math.min(100,(p-pgLeft)/(pgRight-pgLeft)*100));
-  const liqPct2=sf?Math.max(0,Math.min(100,(sf.liq-pgLeft)/(pgRight-pgLeft)*100)):-1;
+  const liqPct2=crossLiq?Math.max(0,Math.min(100,(crossLiq-pgLeft)/(pgRight-pgLeft)*100)):-1;
+  
   S_g('S_pg-left').textContent=pgLeft.toFixed(4);S_g('S_pg-right').textContent=pgRight.toFixed(4);
-  S_g('S_pg-center').textContent=sf?'Liq: '+sf.liq.toFixed(4):'';
   const fill=S_g('S_pg-fill');fill.style.width=pct+'%';fill.className='progress-bar-fill'+(pct>70?' danger':'');
   const marker=S_g('S_pg-marker');marker.style.left=pct+'%';marker.style.background=total>=0?'var(--green)':'var(--red)';
   const liqM=S_g('S_pg-liq');if(liqPct2>=0){liqM.style.display='block';liqM.style.left=liqPct2+'%';}else liqM.style.display='none';
 }
 
 function S_simulate(){
-  if(!S_state)return;
-  const exitPrice=parseFloat(S_g('S_sim-price').value);
+  if(!S_state)return; const exitPrice=parseFloat(S_g('S_sim-price').value);
   if(isNaN(exitPrice)||exitPrice<=0)return;
-  const{balance,leverage}=S_state,{sf,lf,liShort,liLong}=S_getFilledSummary();
+  const{balance,leverage}=S_state,{sf,lf,liShort,liLong,crossLiq}=S_getFilledSummary();
   if(!sf&&!lf){S_g('S_sim-result').innerHTML=`<div class="empty-msg">⬅ Chưa có lệnh nào được tick khớp.<br>Hãy tick ít nhất 1 lệnh trong tab "Lệnh vào".</div>`;return;}
-  const psRaw=sf?(sf.newEntry-exitPrice)*sf.totalCoins:0,psNet=sf?psRaw-sf.fee:0;
-  const plRaw=lf?(exitPrice-lf.newEntry)*lf.totalCoins:0,plNet=lf?plRaw-lf.fee:0;
-  const total=psNet+plNet,dw=balance+total,rorS=sf?psNet/(sf.totalKl/leverage)*100:0,rorL=lf?plNet/(lf.totalKl/leverage)*100:0;
-  const liqHit=sf&&exitPrice>=sf.liq;
+  
+  const psRaw=sf?(sf.newEntry-exitPrice)*sf.totalCoins:0, psNet=sf?psRaw-sf.fee:0;
+  const plRaw=lf?(exitPrice-lf.newEntry)*lf.totalCoins:0, plNet=lf?plRaw-lf.fee:0;
+  const total=psNet+plNet, dw=balance+total, rorS=sf?psNet/(sf.totalKl/leverage)*100:0, rorL=lf?plNet/(lf.totalKl/leverage)*100:0;
+  
+  let cL = lf?lf.totalCoins:0, cS = sf?sf.totalCoins:0; let liqHit = false;
+  if (crossLiq) { if (cL > cS && exitPrice <= crossLiq) liqHit = true; if (cS > cL && exitPrice >= crossLiq) liqHit = true; }
+
   S_g('S_sim-result').innerHTML=`<div class="result-box">
     <div class="result-row"><span class="k">Giá exit</span><span class="v b">${exitPrice.toFixed(6)}</span></div>
     <div class="result-row"><span class="k">Lệnh tính</span><span style="font-size:11px">${liShort.length?`<span style="color:var(--red)">${liShort.length} Short</span>`:''} ${liShort.length&&liLong.length?'+':''} ${liLong.length?`<span style="color:var(--green)">${liLong.length} Long</span>`:''}</span></div>
     <div class="sep"></div>
-    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
     <div class="sep"></div>
-    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh khớp</span></div>`}
+    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
     <div class="sep"></div>
     <div class="result-row"><span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
     <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((sf?sf.fee:0)+(lf?lf.fee:0),4)} USDT</span></div>
   </div>
-  ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} ≥ Liq Short (${sf.liq.toFixed(4)}) → SHORT bị thanh lý!</div>`:''}`;
+  ${liqHit?`<div class="warn liq-warn">⚠ Giá ${exitPrice.toFixed(4)} vượt ngưỡng Cross Liq (${crossLiq.toFixed(4)}) → VỊ THẾ ĐÃ CHÁY!</div>`:''}`;
 }
 
 function S_drawChart(){
-  if(!S_state)return;
-  const{sf,lf}=S_getFilledSummary();
+  if(!S_state)return; const{sf,lf,crossLiq}=S_getFilledSummary();
   if(!sf&&!lf){if(S_pnlChart){S_pnlChart.destroy();S_pnlChart=null;}S_g('S_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
-  const{e1}=S_state,refLiq=sf?sf.liq:(lf?lf.newEntry*1.5:e1*1.5);
+  const{e1}=S_state,refLiq=crossLiq ? crossLiq : e1*1.5;
   const priceMin=Math.max(e1*0.65,0.0001),priceMax=refLiq*1.1,steps=120;
   const labels=[],sdArr=[],ldArr=[],tdArr=[];
   for(let i=0;i<=steps;i++){const p=priceMin+(priceMax-priceMin)*i/steps;labels.push(p.toFixed(4));const ps=sf?(sf.newEntry-p)*sf.totalCoins-sf.fee:0,pl=lf?(p-lf.newEntry)*lf.totalCoins-lf.fee:0;if(sf)sdArr.push(+ps.toFixed(2));if(lf)ldArr.push(+pl.toFixed(2));tdArr.push(+(ps+pl).toFixed(2));}
@@ -913,8 +912,11 @@ function S_switchTab(name){
   if(name==='chart')setTimeout(S_drawChart,50);
 }
 
-// ── INIT
-window.onload = () => { L_calculate(); };
+// Chạy khởi tạo cả 2 tab ngay từ đầu để đảm bảo không lỗi khi chuyển qua lại
+window.onload = () => { 
+  L_calculate(); 
+  S_calculate(); 
+};
 </script>
 </body>
 </html>
