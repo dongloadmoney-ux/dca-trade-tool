@@ -16,25 +16,43 @@
     --amber: #ffb830; --text: #e8eaf0; --muted: #5a6070; --muted2: #8892a0;
     --font-mono: 'JetBrains Mono', monospace; --font-display: 'Syne', sans-serif;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
+  
+  body { 
+    background: var(--bg); color: var(--text); font-family: var(--font-mono); 
+    font-size: 12px; line-height: 1.5; 
+    display: flex; flex-direction: column; 
+  }
 
-  /* ── APP SHELL ── */
-  .app { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  /* ── SCROLLBAR RIÊNG ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  .app { padding: 10px 14px; width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
   /* ── TOP HEADER ── */
   .app-header {
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 0; padding-bottom: 14px;
-    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 8px; margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
-  .app-header h1 { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
-  .badge { font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; }
+  .app-header h1 { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; }
   .badge-futures { background: var(--green2); color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
+  
+  /* Nút Toggle Giao diện */
+  .btn-toggle-view {
+    margin-left: auto; padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--text); font-family: var(--font-mono); font-size: 11px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-toggle-view:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 
-  /* ── MAIN MODE TABS (Long / Short) ── */
-  .mode-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid var(--border); }
+  /* ── MAIN MODE TABS ── */
+  .mode-tabs { display: flex; gap: 0; margin-bottom: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .mode-tab {
-    padding: 12px 32px; font-family: var(--font-display); font-size: 13px; font-weight: 700;
+    padding: 8px 24px; font-family: var(--font-display); font-size: 12px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
     border: none; background: transparent; color: var(--muted);
     border-bottom: 3px solid transparent; transition: all 0.18s; margin-bottom: -1px;
@@ -42,51 +60,122 @@
   .mode-tab:hover { color: var(--text); }
   .mode-tab.long.active  { color: var(--green); border-bottom-color: var(--green); background: rgba(0,229,160,0.04); }
   .mode-tab.short.active { color: var(--red);   border-bottom-color: var(--red);   background: rgba(255,77,106,0.04); }
-  .mode-tab.long:hover:not(.active)  { background: rgba(0,229,160,0.03); }
-  .mode-tab.short:hover:not(.active) { background: rgba(255,77,106,0.03); }
   .mode-badge { font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
   .mode-badge.l { background: var(--green2); color: var(--green); }
   .mode-badge.s { background: var(--red2);   color: var(--red); }
 
-  /* ── TAB PANES ── */
-  .mode-pane { display: none; padding-top: 20px; }
-  .mode-pane.active { display: block; }
+  /* ── CORE LAYOUT CƠ BẢN ── */
+  .mode-pane { display: none; flex: 1; }
+  .mode-pane.active { display: flex; }
+  .layout-wrapper { display: flex; width: 100%; gap: 12px; }
+  
+  /* =========================================
+     CẤU HÌNH GIAO DIỆN DESKTOP (1 MÀN HÌNH)
+     ========================================= */
+  body.layout-desktop { height: 100vh; overflow: hidden; min-width: 1024px; }
+  body.layout-desktop .mode-pane { overflow: hidden; }
+  body.layout-desktop .layout-wrapper { height: 100%; flex-direction: row; }
+  body.layout-desktop .col-inputs { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; }
+  body.layout-desktop .col-results { flex: 1; display: flex; gap: 12px; min-width: 0; height: 100%; }
+  body.layout-desktop .col-center { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+  body.layout-desktop .col-right { flex: 1; min-width: 400px; display: flex; flex-direction: column; min-height: 0; }
+  body.layout-desktop .panel { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+  body.layout-desktop .inputs-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 4px; margin-right: -4px; }
+  body.layout-desktop .live-panel { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+  body.layout-desktop .live-stats { flex: 1; overflow-y: auto; padding-right: 2px; }
+  body.layout-desktop .tab-content { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  body.layout-desktop .tab-content.active { display: flex; }
+  body.layout-desktop .table-wrap { flex: 1; overflow-y: auto; }
+  body.layout-desktop .sim-scroll { flex: 1; overflow-y: auto; padding-right: 4px; }
+  body.layout-desktop th { position: sticky; top: 0; background: var(--surface2); z-index: 10; }
+  body.layout-desktop tr.row-total td { position: sticky; bottom: 0; z-index: 9; }
+  body.layout-desktop .chart-wrap { flex: 1; min-height: 0; }
+
+  /* =========================================
+     CẤU HÌNH GIAO DIỆN MOBILE (CUỘN TRANG)
+     ========================================= */
+  body.layout-mobile { height: auto; overflow-y: auto; min-width: 320px; }
+  body.layout-mobile .app { height: auto; overflow: visible; }
+  body.layout-mobile .layout-wrapper { flex-direction: column; height: auto; }
+  body.layout-mobile .col-inputs, 
+  body.layout-mobile .col-center, 
+  body.layout-mobile .col-right { width: 100%; height: auto; display: flex; flex-direction: column; gap: 10px; }
+  body.layout-mobile .col-results { display: flex; flex-direction: column; gap: 12px; }
+  body.layout-mobile .panel, 
+  body.layout-mobile .live-panel { height: auto; min-height: unset; overflow: visible; }
+  body.layout-mobile .inputs-scroll, 
+  body.layout-mobile .live-stats, 
+  body.layout-mobile .sim-scroll { overflow-y: visible; flex: none; height: auto; }
+  body.layout-mobile .tab-content { display: none; flex-direction: column; height: auto; }
+  body.layout-mobile .tab-content.active { display: flex; }
+  body.layout-mobile .table-wrap { overflow-x: auto; overflow-y: visible; max-height: 500px; } /* Cho phép cuộn bảng ngang/dọc trên mobile */
+  body.layout-mobile .chart-wrap { height: 350px; flex: none; } /* Cố định chiều cao biểu đồ trên mobile */
 
   /* ── SHARED INNER STYLES ── */
-  .grid2 { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-  .panel-title { font-family: var(--font-display); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 14px; }
-  .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 11px; color: var(--muted2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .field input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 5px; color: var(--text); font-family: var(--font-mono); font-size: 13px; font-weight: 500; padding: 7px 10px; outline: none; transition: border-color 0.2s; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .panel-title { font-family: var(--font-display); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; flex-shrink: 0; }
+  
+  .field { margin-bottom: 8px; }
+  .field label { display: block; font-size: 10px; color: var(--muted2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .field input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 12px; font-weight: 500; padding: 5px 8px; outline: none; transition: border-color 0.2s; }
+  .field input.amber-input { color: var(--amber); border-color: rgba(255, 184, 48, 0.3); }
+  .field input.amber-input:focus { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255, 184, 48, 0.1); }
+  
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-  .btn-run-long  { width:100%; margin-top:16px; padding:11px; background:var(--green); color:#000; border:none; border-radius:5px; font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:0.05em; cursor:pointer; transition:opacity 0.2s; }
-  .btn-run-long:hover { opacity:0.85; }
-  .btn-run-short { width:100%; margin-top:16px; padding:11px; background:var(--red); color:#fff; border:none; border-radius:5px; font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:0.05em; cursor:pointer; transition:opacity 0.2s; }
-  .btn-run-short:hover { opacity:0.85; }
+  .btn-run-long, .btn-run-short { width:100%; margin-top:10px; padding:8px; border:none; border-radius:4px; font-family:var(--font-display); font-weight:800; font-size:12px; letter-spacing:0.05em; cursor:pointer; transition:opacity 0.2s; flex-shrink:0; }
+  .btn-run-long { background:var(--green); color:#000; }
+  .btn-run-short { background:var(--red); color:#fff; }
+  .btn-run-long:hover, .btn-run-short:hover { opacity:0.85; }
 
-  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
-  .stat { background:var(--surface2); border-radius:6px; padding:10px 12px; border:1px solid var(--border); }
-  .stat .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
-  .stat .val { font-size:17px; font-weight:600; }
+  .stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; flex-shrink:0; }
+  .stat { background:var(--surface2); border-radius:6px; padding:8px 10px; border:1px solid var(--border); }
+  .stat .lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px; }
+  .stat .val { font-size:15px; font-weight:600; }
   .stat .val.g { color:var(--green); } .stat .val.r { color:var(--red); }
   .stat .val.b { color:var(--blue); } .stat .val.a { color:var(--amber); }
   .stat .val.muted { color:var(--muted); }
-  .stat .sub-val { font-size:10px; color:var(--muted); margin-top:2px; }
+  .stat .sub-val { font-size:9px; color:var(--muted); margin-top:2px; }
 
-  /* inner tabs */
-  .tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
-  .tab  { padding:5px 14px; border-radius:5px; border:1px solid var(--border); font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.15s; letter-spacing:0.05em; text-transform:uppercase; background:transparent; }
+  .live-panel { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:12px; }
+  .live-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-shrink:0; }
+  .live-label { font-size:10px; color:var(--muted2); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .live-input-wrap { display:flex; align-items:center; gap:8px; flex:1; }
+  .live-input-long, .live-input-short {
+    flex:1; background:var(--surface2); border-radius:4px; font-family:var(--font-mono); font-size:14px; font-weight:700;
+    padding:6px 10px; outline:none; transition:border-color 0.2s; min-width:0; border: 1.5px solid;
+  }
+  .live-input-long { color:var(--blue); border-color:rgba(77,159,255,0.35); }
+  .live-input-long:focus { border-color:var(--blue); box-shadow:0 0 0 2px rgba(77,159,255,0.1); }
+  .live-input-short { color:var(--red); border-color:rgba(255,77,106,0.35); }
+  .live-input-short:focus { border-color:var(--red); box-shadow:0 0 0 2px rgba(255,77,106,0.1); }
+  .live-input-long::placeholder, .live-input-short::placeholder { color:var(--muted); font-weight:400; font-size:12px; }
+  .live-coin-tag { font-size:10px; color:var(--muted); white-space:nowrap; }
+
+  .live-progress { margin-bottom:12px; flex-shrink:0; }
+  .progress-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-bottom:4px; }
+  .progress-bar-wrap { position:relative; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:visible; }
+  .progress-bar-fill { height:100%; border-radius:3px; transition:width 0.3s ease; background:linear-gradient(90deg,var(--green),var(--amber)); }
+  .progress-bar-fill.danger { background:linear-gradient(90deg,var(--amber),var(--red)); }
+  .progress-marker { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg); transition:left 0.3s ease; }
+
+  .live-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
+  .live-stat { background:var(--surface2); border-radius:4px; padding:6px 8px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; }
+  .live-stat .ls-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px; }
+  .live-stat .ls-val { font-size:12px; font-weight:700; }
+  .live-stat .ls-val.g { color:var(--green); } .live-stat .ls-val.r { color:var(--red); }
+  .live-stat .ls-val.b { color:var(--blue); }  .live-stat .ls-val.a { color:var(--amber); }
+  .live-stat .ls-val.muted { color:var(--muted2); }
+  .live-stat .ls-sub { font-size:9px; color:var(--muted); margin-top:1px; }
+
+  .tabs { display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; flex-shrink:0; }
+  .tab  { padding:4px 12px; border-radius:4px; border:1px solid var(--border); font-size:10px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.15s; letter-spacing:0.05em; text-transform:uppercase; background:transparent; }
   .tab.active { background:var(--blue2); color:var(--blue); border-color:rgba(77,159,255,0.3); }
   .tab:hover:not(.active) { border-color:var(--border2); color:var(--text); }
-  .tab-content { display:none; }
-  .tab-content.active { display:block; }
 
-  /* toolbar */
-  .table-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-  .toolbar-label { font-size:11px; color:var(--muted2); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
-  .btn-tb { padding:4px 12px; border-radius:4px; font-family:var(--font-mono); font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border2); background:var(--surface2); color:var(--text); transition:all 0.15s; }
+  .table-toolbar { display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; flex-shrink:0; }
+  .toolbar-label { font-size:10px; color:var(--muted2); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+  .btn-tb { padding:3px 10px; border-radius:3px; font-family:var(--font-mono); font-size:10px; font-weight:600; cursor:pointer; border:1px solid var(--border2); background:var(--surface2); color:var(--text); transition:all 0.15s; }
   .btn-tb:hover { background:rgba(255,255,255,0.06); }
   .btn-tb.all   { border-color:rgba(0,229,160,0.35); color:var(--green); background:var(--green3); }
   .btn-tb.all:hover { background:rgba(0,229,160,0.14); }
@@ -96,16 +185,16 @@
   .btn-tb.long-only:hover  { background:var(--green3); }
   .btn-tb.short-only { border-color:rgba(255,77,106,0.2); color:var(--red); background:transparent; }
   .btn-tb.short-only:hover { background:var(--red3); }
-  .fill-count { margin-left:auto; font-size:11px; color:var(--muted); }
+  .fill-count { margin-left:auto; font-size:10px; color:var(--muted); }
   .fill-count span { color:var(--amber); font-weight:600; }
 
-  /* table */
-  table { width:100%; border-collapse:collapse; font-size:12px; }
-  th { font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; padding:6px 10px; text-align:right; border-bottom:1px solid var(--border); }
-  th:first-child { text-align:center; width:44px; }
+  .table-wrap { border:1px solid var(--border); border-radius:4px; background:var(--surface2); }
+  table { width:100%; border-collapse:separate; border-spacing: 0; font-size:11px; }
+  th { font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); font-weight:600; padding:5px 8px; text-align:right; border-bottom:1px solid var(--border); }
+  th:first-child { text-align:center; width:40px; }
   th:nth-child(2) { text-align:left; }
-  td { padding:7px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.03); font-weight:500; transition:background 0.12s; }
-  td:first-child { text-align:center; width:44px; padding:7px 6px; }
+  td { padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.03); font-weight:500; transition:background 0.12s; white-space: nowrap; }
+  td:first-child { text-align:center; width:40px; }
   td:nth-child(2) { text-align:left; }
   tr:hover td { background:rgba(255,255,255,0.025); }
   tr.row-filled-long  td:nth-child(2) { color:var(--green); }
@@ -114,89 +203,51 @@
   tr.row-unfilled td:first-child { opacity:1 !important; }
   tr.row-unfilled:hover { opacity:0.55; }
   tr.row-total td { background:rgba(255,255,255,0.025); font-weight:700; border-top:1px solid var(--border); }
+  tr.row-sl td { background: rgba(255,184,48,0.06); color: var(--amber); }
+  tr.row-sl:hover td { background: rgba(255,184,48,0.1); }
 
-  /* checkbox */
   .chk { display:flex; align-items:center; justify-content:center; }
-  .chk-box { width:17px; height:17px; border-radius:4px; border:1.5px solid var(--border2); background:var(--surface2); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; user-select:none; }
+  .chk-box { width:15px; height:15px; border-radius:3px; border:1.5px solid var(--border2); background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; user-select:none; }
   .chk-box:hover { border-color:rgba(255,255,255,0.35); transform:scale(1.08); }
   .chk-box.on-long  { background:var(--green2); border-color:var(--green); }
   .chk-box.on-short { background:var(--red2);   border-color:var(--red); }
   .chk-box svg { display:none; pointer-events:none; }
   .chk-box.on-long svg, .chk-box.on-short svg { display:block; }
 
-  .tag { display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:700; letter-spacing:0.05em; vertical-align:middle; margin-left:4px; }
+  .tag { display:inline-block; font-size:9px; padding:1px 4px; border-radius:2px; font-weight:700; letter-spacing:0.05em; vertical-align:middle; margin-left:4px; }
   .tag-l { background:var(--green2); color:var(--green); }
   .tag-s { background:var(--red2);   color:var(--red); }
 
-  .chart-wrap { position:relative; height:250px; margin-top:4px; }
-  .sim-controls { display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+  .sim-controls { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; flex-shrink:0; }
   .sim-controls label { font-size:11px; color:var(--muted2); }
-  .sim-controls input { width:130px; background:var(--surface2); border:1px solid var(--border2); border-radius:4px; color:var(--text); font-family:var(--font-mono); font-size:12px; padding:6px 8px; outline:none; }
-  .btn-sim { padding:6px 16px; background:var(--blue2); color:var(--blue); border:1px solid rgba(77,159,255,0.25); border-radius:4px; font-family:var(--font-mono); font-size:12px; font-weight:600; cursor:pointer; }
+  .sim-controls input { width:130px; background:var(--surface2); border:1px solid var(--border2); border-radius:4px; color:var(--text); font-family:var(--font-mono); font-size:12px; padding:5px 8px; outline:none; }
+  .btn-sim { padding:5px 14px; background:var(--blue2); color:var(--blue); border:1px solid rgba(77,159,255,0.25); border-radius:4px; font-family:var(--font-mono); font-size:11px; font-weight:600; cursor:pointer; }
   .btn-sim:hover { background:rgba(77,159,255,0.18); }
 
-  .result-box { background:var(--surface2); border-radius:6px; padding:12px 14px; border:1px solid var(--border); margin-top:10px; }
-  .result-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .result-box { background:var(--surface2); border-radius:6px; padding:8px 10px; border:1px solid var(--border); }
+  .result-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
   .result-row:last-child { border-bottom:none; }
   .result-row .k { font-size:11px; color:var(--muted2); }
-  .result-row .v { font-weight:600; font-size:13px; }
+  .result-row .v { font-weight:600; font-size:12px; }
   .v.g { color:var(--green); } .v.r { color:var(--red); } .v.b { color:var(--blue); } .v.a { color:var(--amber); }
-  .warn { font-size:11px; padding:8px 12px; border-radius:4px; background:rgba(255,184,48,0.08); border:1px solid rgba(255,184,48,0.2); color:var(--amber); margin-top:8px; }
+  .warn { font-size:10px; padding:6px 10px; border-radius:4px; background:rgba(255,184,48,0.08); border:1px solid rgba(255,184,48,0.2); color:var(--amber); margin-top:8px; }
   .liq-warn { background:rgba(255,77,106,0.08)!important; border-color:rgba(255,77,106,0.2)!important; color:var(--red)!important; }
-  .sep { height:1px; background:var(--border); margin:8px 0; }
-  .empty-msg { text-align:center; padding:32px 16px; color:var(--muted); font-size:12px; line-height:2; }
+  .sep { height:1px; background:var(--border); margin:6px 0; }
+  .empty-msg { text-align:center; padding:24px 12px; color:var(--muted); font-size:11px; line-height:1.8; }
 
-  /* live panel */
-  .live-panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
-  .live-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-  .live-label { font-size:11px; color:var(--muted2); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
-  .live-input-wrap { display:flex; align-items:center; gap:8px; flex:1; }
-  .live-input-long {
-    flex:1; background:var(--surface2); border:1.5px solid rgba(77,159,255,0.35); border-radius:5px;
-    color:var(--blue); font-family:var(--font-mono); font-size:16px; font-weight:700;
-    padding:7px 12px; outline:none; transition:border-color 0.2s; min-width:0;
-  }
-  .live-input-long:focus { border-color:var(--blue); box-shadow:0 0 0 2px rgba(77,159,255,0.1); }
-  .live-input-short {
-    flex:1; background:var(--surface2); border:1.5px solid rgba(255,77,106,0.35); border-radius:5px;
-    color:var(--red); font-family:var(--font-mono); font-size:16px; font-weight:700;
-    padding:7px 12px; outline:none; transition:border-color 0.2s; min-width:0;
-  }
-  .live-input-short:focus { border-color:var(--red); box-shadow:0 0 0 2px rgba(255,77,106,0.1); }
-  .live-input-long::placeholder, .live-input-short::placeholder { color:var(--muted); font-weight:400; font-size:13px; }
-  .live-coin-tag { font-size:11px; color:var(--muted); white-space:nowrap; }
-
-  .live-progress { margin-bottom:10px; }
-  .progress-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-bottom:5px; }
-  .progress-bar-wrap { position:relative; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:visible; }
-  .progress-bar-fill { height:100%; border-radius:3px; transition:width 0.3s ease; background:linear-gradient(90deg,var(--green),var(--amber)); }
-  .progress-bar-fill.danger { background:linear-gradient(90deg,var(--amber),var(--red)); }
-  .progress-marker { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; border:2px solid var(--bg); transition:left 0.3s ease; }
-
-  .live-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
-  .live-stat { background:var(--surface2); border-radius:5px; padding:8px 10px; border:1px solid var(--border); }
-  .live-stat .ls-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px; }
-  .live-stat .ls-val { font-size:13px; font-weight:700; }
-  .live-stat .ls-val.g { color:var(--green); } .live-stat .ls-val.r { color:var(--red); }
-  .live-stat .ls-val.b { color:var(--blue); }  .live-stat .ls-val.a { color:var(--amber); }
-  .live-stat .ls-val.muted { color:var(--muted2); }
-  .live-stat .ls-sub { font-size:9px; color:var(--muted); margin-top:2px; }
-
-  @media (max-width:820px) {
-    .grid2 { grid-template-columns:1fr; }
-    .stat-grid { grid-template-columns:repeat(2,1fr); }
-    .live-stats { grid-template-columns:repeat(3,1fr); }
-    .mode-tab { padding:10px 18px; font-size:12px; }
-  }
 </style>
 </head>
-<body>
+<body class="layout-desktop">
 <div class="app">
 
   <div class="app-header">
     <h1>TRADE DCA BINANCE FUTURE</h1>
     <span class="badge badge-futures">FUTURES</span>
-    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Tính giá cháy Cross Margin - Hedge Mode</span>
+    <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Tính giá cháy Cross Margin - Hedge Mode</span>
+    
+    <button id="btn-toggle-layout" class="btn-toggle-view" onclick="toggleLayout()">
+      📱 Đổi sang Mobile
+    </button>
   </div>
 
   <div class="mode-tabs">
@@ -211,99 +262,112 @@
   </div>
 
   <div class="mode-pane active" id="pane-long">
-    <div class="grid2">
-      <div>
+    <div class="layout-wrapper">
+      <div class="col-inputs">
         <div class="panel">
           <div class="panel-title">Thông số chiến lược — DCA Long</div>
-          <div class="field"><label>Coin / Symbol</label><input type="text" id="L_coin" value="TRBUSDT"></div>
-          <div class="row2">
-            <div class="field"><label>Balance (USDT)</label><input type="number" id="L_balance" value="300" min="1"></div>
-            <div class="field"><label>Budget (USDT)</label><input type="number" id="L_budget" value="100" min="1"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="L_leverage" value="15" min="1" max="125"></div>
-            <div class="field"><label>Entry 1 Long</label><input type="number" id="L_entry1" value="22" step="0.0001"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>% Giảm / bước</label><input type="number" id="L_pct_drop" value="5" step="0.1" min="0.1"></div>
-            <div class="field"><label>Nhân size / bước</label><input type="number" id="L_size_mult" value="2" step="0.5" min="1"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Số DCA Long</label><input type="number" id="L_n_long" value="5" min="1" max="10"></div>
-            <div class="field"><label>Số DCA Short</label><input type="number" id="L_n_short" value="4" min="1" max="10"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Short offset ↓ (%)</label><input type="number" id="L_short_offset" value="2.5" step="0.1" min="0"></div>
-            <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="L_fee_rate" value="0.04" step="0.01" min="0"></div>
+          <div class="inputs-scroll">
+            <div class="field"><label>Coin / Symbol</label><input type="text" id="L_coin" value="TRBUSDT"></div>
+            <div class="row2">
+              <div class="field"><label>Balance (USDT)</label><input type="number" id="L_balance" value="300" min="1"></div>
+              <div class="field"><label>Budget (USDT)</label><input type="number" id="L_budget" value="100" min="1"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="L_leverage" value="15" min="1" max="125"></div>
+              <div class="field"><label>Entry 1 Long</label><input type="number" id="L_entry1" value="22" step="0.0001"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>% Giảm / bước</label><input type="number" id="L_pct_drop" value="5" step="0.1" min="0.1"></div>
+              <div class="field"><label>Nhân size / bước</label><input type="number" id="L_size_mult" value="2" step="0.5" min="1"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Số DCA Long</label><input type="number" id="L_n_long" value="5" min="1" max="10"></div>
+              <div class="field"><label>Số DCA Short</label><input type="number" id="L_n_short" value="4" min="1" max="10"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Short offset ↓ (%)</label><input type="number" id="L_short_offset" value="2.5" step="0.1" min="0"></div>
+              <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="L_fee_rate" value="0.04" step="0.01" min="0"></div>
+            </div>
+            <div class="field" style="margin-bottom:0"><label>% Cắt lỗ (sau lệnh cuối)</label><input type="number" id="L_sl_pct" class="amber-input" value="5.0" step="0.1" min="0"></div>
           </div>
           <button class="btn-run-long" onclick="L_calculate()">▶ TÍNH TOÁN LONG</button>
         </div>
       </div>
 
-      <div id="L_results" style="display:none;">
-        <div class="stat-grid" id="L_stat-row"></div>
-
-        <div class="live-panel">
-          <div class="live-top">
-            <span class="live-label">Giá hiện tại</span>
-            <div class="live-input-wrap">
-              <input class="live-input-long" type="number" id="L_live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="L_onLivePrice()">
-              <span class="live-coin-tag" id="L_live-coin-tag">USDT</span>
+      <div class="col-results" id="L_results">
+        <div class="col-center">
+          <div class="stat-grid" id="L_stat-row"></div>
+          
+          <div class="live-panel">
+            <div class="live-top">
+              <span class="live-label">Giá hiện tại</span>
+              <div class="live-input-wrap">
+                <input class="live-input-long" type="number" id="L_live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="L_onLivePrice()">
+                <span class="live-coin-tag" id="L_live-coin-tag">USDT</span>
+              </div>
             </div>
-          </div>
-          <div class="live-progress" id="L_live-progress" style="display:none;">
-            <div class="progress-labels">
-              <span id="L_pg-left"></span>
-              <span id="L_pg-center" style="color:var(--amber)"></span>
-              <span id="L_pg-right"></span>
+            <div class="live-progress" id="L_live-progress" style="display:none;">
+              <div class="progress-labels">
+                <span id="L_pg-left"></span>
+                <span id="L_pg-center" style="color:var(--amber)"></span>
+                <span id="L_pg-right"></span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="L_pg-fill" style="width:0%"></div>
+                <div class="progress-marker" id="L_pg-marker" style="left:0%;background:var(--blue)"></div>
+                <div class="progress-marker" id="L_pg-liq" style="left:0%;background:var(--red);display:none"></div>
+              </div>
             </div>
-            <div class="progress-bar-wrap">
-              <div class="progress-bar-fill" id="L_pg-fill" style="width:0%"></div>
-              <div class="progress-marker" id="L_pg-marker" style="left:0%;background:var(--blue)"></div>
-              <div class="progress-marker" id="L_pg-liq" style="left:0%;background:var(--red);display:none"></div>
+            <div class="live-stats">
+              <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="L_ls-pnl-long">—</div><div class="ls-sub" id="L_ls-ror-long"></div></div>
+              <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="L_ls-pnl-short">—</div><div class="ls-sub" id="L_ls-ror-short"></div></div>
+              <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="L_ls-pnl-total">—</div><div class="ls-sub" id="L_ls-dw"></div></div>
+              <div class="live-stat"><div class="ls-label">Giá giảm L1→Cuối</div><div class="ls-val a" id="L_ls-drop-range">—</div><div class="ls-sub" id="L_ls-drop-cur"></div></div>
+              <div class="live-stat" style="grid-column: span 2"><div class="ls-label">Vị trí giá hiện tại</div><div class="ls-val b" id="L_ls-position">—</div><div class="ls-sub" id="L_ls-vs-entry"></div></div>
             </div>
-          </div>
-          <div class="live-stats">
-            <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="L_ls-pnl-long">—</div><div class="ls-sub" id="L_ls-ror-long"></div></div>
-            <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="L_ls-pnl-short">—</div><div class="ls-sub" id="L_ls-ror-short"></div></div>
-            <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="L_ls-pnl-total">—</div><div class="ls-sub" id="L_ls-dw"></div></div>
-            <div class="live-stat"><div class="ls-label">Giá giảm L1→Lcuối</div><div class="ls-val a" id="L_ls-drop-range">—</div><div class="ls-sub" id="L_ls-drop-cur"></div></div>
-            <div class="live-stat"><div class="ls-label">Vị trí giá</div><div class="ls-val b" id="L_ls-position">—</div><div class="ls-sub" id="L_ls-vs-entry"></div></div>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="tabs">
-            <button class="tab active" onclick="L_switchTab('entries')">Lệnh vào</button>
-            <button class="tab" onclick="L_switchTab('sim')">Mô phỏng giá</button>
-            <button class="tab" onclick="L_switchTab('chart')">Biểu đồ PnL</button>
-            <button class="tab" onclick="L_switchTab('risk')">Rủi ro</button>
-          </div>
-          <div class="tab-content active" id="L_tab-entries">
-            <div class="table-toolbar">
-              <span class="toolbar-label">Lệnh khớp:</span>
-              <button class="btn-tb all"        onclick="L_selectAll()">✓ Chọn tất cả</button>
-              <button class="btn-tb none"       onclick="L_selectNone()">✕ Bỏ chọn tất cả</button>
-              <button class="btn-tb long-only"  onclick="L_selectLongOnly()">Long only</button>
-              <button class="btn-tb short-only" onclick="L_selectShortOnly()">Short only</button>
-              <span class="fill-count" id="L_fill-count"></span>
+        <div class="col-right">
+          <div class="panel">
+            <div class="tabs">
+              <button class="tab active" onclick="L_switchTab('entries')">Lệnh vào</button>
+              <button class="tab" onclick="L_switchTab('sim')">Mô phỏng PnL</button>
+              <button class="tab" onclick="L_switchTab('chart')">Biểu đồ</button>
+              <button class="tab" onclick="L_switchTab('risk')">Rủi ro</button>
             </div>
-            <table id="L_entry-table"></table>
-          </div>
-          <div class="tab-content" id="L_tab-sim">
-            <div class="sim-controls">
-              <label>Giá exit:</label>
-              <input type="number" id="L_sim-price" step="0.0001" placeholder="Nhập giá...">
-              <button class="btn-sim" onclick="L_simulate()">Tính PnL</button>
+            
+            <div class="tab-content active" id="L_tab-entries">
+              <div class="table-toolbar">
+                <span class="toolbar-label">Lệnh khớp:</span>
+                <button class="btn-tb all"        onclick="L_selectAll()">✓ Chọn tất cả</button>
+                <button class="btn-tb none"       onclick="L_selectNone()">✕ Bỏ tất cả</button>
+                <button class="btn-tb long-only"  onclick="L_selectLongOnly()">Long only</button>
+                <button class="btn-tb short-only" onclick="L_selectShortOnly()">Short only</button>
+                <span class="fill-count" id="L_fill-count"></span>
+              </div>
+              <div class="table-wrap">
+                <table id="L_entry-table"></table>
+              </div>
             </div>
-            <div id="L_sim-result"></div>
-          </div>
-          <div class="tab-content" id="L_tab-chart">
-            <div class="chart-wrap"><canvas id="L_canvas-pnl"></canvas></div>
-            <div id="L_chart-legend" style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted2)"></div>
-          </div>
-          <div class="tab-content" id="L_tab-risk">
-            <div id="L_risk-content"></div>
+            
+            <div class="tab-content" id="L_tab-sim">
+              <div class="sim-controls">
+                <label>Giá exit:</label>
+                <input type="number" id="L_sim-price" step="0.0001" placeholder="Nhập giá...">
+                <button class="btn-sim" onclick="L_simulate()">Tính PnL</button>
+              </div>
+              <div class="sim-scroll" id="L_sim-result"></div>
+            </div>
+            
+            <div class="tab-content" id="L_tab-chart">
+              <div class="chart-wrap"><canvas id="L_canvas-pnl"></canvas></div>
+              <div id="L_chart-legend" style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:var(--muted2)"></div>
+            </div>
+            
+            <div class="tab-content sim-scroll" id="L_tab-risk">
+              <div id="L_risk-content"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -311,107 +375,154 @@
   </div>
 
   <div class="mode-pane" id="pane-short">
-    <div class="grid2">
-      <div>
+    <div class="layout-wrapper">
+      <div class="col-inputs">
         <div class="panel">
           <div class="panel-title">Thông số chiến lược — DCA Short</div>
-          <div class="field"><label>Coin / Symbol</label><input type="text" id="S_coin" value="BTCUSDT"></div>
-          <div class="row2">
-            <div class="field"><label>Balance (USDT)</label><input type="number" id="S_balance" value="300" min="1"></div>
-            <div class="field"><label>Budget (USDT)</label><input type="number" id="S_budget" value="100" min="1"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="S_leverage" value="15" min="1" max="125"></div>
-            <div class="field"><label>Entry 1 Short</label><input type="number" id="S_entry1" value="22" step="0.0001"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>% Tăng / bước</label><input type="number" id="S_pct_rise" value="5" step="0.1" min="0.1"></div>
-            <div class="field"><label>Nhân size / bước</label><input type="number" id="S_size_mult" value="2" step="0.5" min="1"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Số DCA Short</label><input type="number" id="S_n_short" value="5" min="1" max="10"></div>
-            <div class="field"><label>Số DCA Long</label><input type="number" id="S_n_long" value="4" min="1" max="10"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Long offset ↑ (%)</label><input type="number" id="S_long_offset" value="2.5" step="0.1" min="0"></div>
-            <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="S_fee_rate" value="0.04" step="0.01" min="0"></div>
+          <div class="inputs-scroll">
+            <div class="field"><label>Coin / Symbol</label><input type="text" id="S_coin" value="BTCUSDT"></div>
+            <div class="row2">
+              <div class="field"><label>Balance (USDT)</label><input type="number" id="S_balance" value="300" min="1"></div>
+              <div class="field"><label>Budget (USDT)</label><input type="number" id="S_budget" value="100" min="1"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Đòn bẩy (x)</label><input type="number" id="S_leverage" value="15" min="1" max="125"></div>
+              <div class="field"><label>Entry 1 Short</label><input type="number" id="S_entry1" value="22" step="0.0001"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>% Tăng / bước</label><input type="number" id="S_pct_rise" value="5" step="0.1" min="0.1"></div>
+              <div class="field"><label>Nhân size / bước</label><input type="number" id="S_size_mult" value="2" step="0.5" min="1"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Số DCA Short</label><input type="number" id="S_n_short" value="5" min="1" max="10"></div>
+              <div class="field"><label>Số DCA Long</label><input type="number" id="S_n_long" value="4" min="1" max="10"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Long offset ↑ (%)</label><input type="number" id="S_long_offset" value="2.5" step="0.1" min="0"></div>
+              <div class="field"><label>Phí giao dịch (%)</label><input type="number" id="S_fee_rate" value="0.04" step="0.01" min="0"></div>
+            </div>
+            <div class="field" style="margin-bottom:0"><label>% Cắt lỗ (sau lệnh cuối)</label><input type="number" id="S_sl_pct" class="amber-input" value="5.0" step="0.1" min="0"></div>
           </div>
           <button class="btn-run-short" onclick="S_calculate()">▶ TÍNH TOÁN SHORT</button>
         </div>
       </div>
 
-      <div id="S_results" style="display:none;">
-        <div class="stat-grid" id="S_stat-row"></div>
-
-        <div class="live-panel">
-          <div class="live-top">
-            <span class="live-label">Giá hiện tại</span>
-            <div class="live-input-wrap">
-              <input class="live-input-short" type="number" id="S_live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="S_onLivePrice()">
-              <span class="live-coin-tag" id="S_live-coin-tag">USDT</span>
+      <div class="col-results" id="S_results">
+        <div class="col-center">
+          <div class="stat-grid" id="S_stat-row"></div>
+          
+          <div class="live-panel">
+            <div class="live-top">
+              <span class="live-label">Giá hiện tại</span>
+              <div class="live-input-wrap">
+                <input class="live-input-short" type="number" id="S_live-price" step="0.000001" placeholder="Nhập giá thị trường..." oninput="S_onLivePrice()">
+                <span class="live-coin-tag" id="S_live-coin-tag">USDT</span>
+              </div>
             </div>
-          </div>
-          <div class="live-progress" id="S_live-progress" style="display:none;">
-            <div class="progress-labels">
-              <span id="S_pg-left"></span>
-              <span id="S_pg-center" style="color:var(--amber)"></span>
-              <span id="S_pg-right"></span>
+            <div class="live-progress" id="S_live-progress" style="display:none;">
+              <div class="progress-labels">
+                <span id="S_pg-left"></span>
+                <span id="S_pg-center" style="color:var(--amber)"></span>
+                <span id="S_pg-right"></span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="S_pg-fill" style="width:0%"></div>
+                <div class="progress-marker" id="S_pg-marker" style="left:0%;background:var(--blue)"></div>
+                <div class="progress-marker" id="S_pg-liq" style="left:0%;background:var(--red);display:none"></div>
+              </div>
             </div>
-            <div class="progress-bar-wrap">
-              <div class="progress-bar-fill" id="S_pg-fill" style="width:0%"></div>
-              <div class="progress-marker" id="S_pg-marker" style="left:0%;background:var(--blue)"></div>
-              <div class="progress-marker" id="S_pg-liq" style="left:0%;background:var(--red);display:none"></div>
+            <div class="live-stats">
+              <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="S_ls-pnl-short">—</div><div class="ls-sub" id="S_ls-ror-short"></div></div>
+              <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="S_ls-pnl-long">—</div><div class="ls-sub" id="S_ls-ror-long"></div></div>
+              <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="S_ls-pnl-total">—</div><div class="ls-sub" id="S_ls-dw"></div></div>
+              <div class="live-stat"><div class="ls-label">Giá tăng S1→Cuối</div><div class="ls-val a" id="S_ls-rise-range">—</div><div class="ls-sub" id="S_ls-rise-cur"></div></div>
+              <div class="live-stat" style="grid-column: span 2"><div class="ls-label">Vị trí giá hiện tại</div><div class="ls-val b" id="S_ls-position">—</div><div class="ls-sub" id="S_ls-vs-entry"></div></div>
             </div>
-          </div>
-          <div class="live-stats">
-            <div class="live-stat"><div class="ls-label">PnL Short</div><div class="ls-val muted" id="S_ls-pnl-short">—</div><div class="ls-sub" id="S_ls-ror-short"></div></div>
-            <div class="live-stat"><div class="ls-label">PnL Long</div><div class="ls-val muted" id="S_ls-pnl-long">—</div><div class="ls-sub" id="S_ls-ror-long"></div></div>
-            <div class="live-stat"><div class="ls-label">Tổng PnL</div><div class="ls-val muted" id="S_ls-pnl-total">—</div><div class="ls-sub" id="S_ls-dw"></div></div>
-            <div class="live-stat"><div class="ls-label">Giá tăng S1→Scuối</div><div class="ls-val a" id="S_ls-rise-range">—</div><div class="ls-sub" id="S_ls-rise-cur"></div></div>
-            <div class="live-stat"><div class="ls-label">Vị trí giá</div><div class="ls-val b" id="S_ls-position">—</div><div class="ls-sub" id="S_ls-vs-entry"></div></div>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="tabs">
-            <button class="tab active" onclick="S_switchTab('entries')">Lệnh vào</button>
-            <button class="tab" onclick="S_switchTab('sim')">Mô phỏng giá</button>
-            <button class="tab" onclick="S_switchTab('chart')">Biểu đồ PnL</button>
-            <button class="tab" onclick="S_switchTab('risk')">Rủi ro</button>
-          </div>
-          <div class="tab-content active" id="S_tab-entries">
-            <div class="table-toolbar">
-              <span class="toolbar-label">Lệnh khớp:</span>
-              <button class="btn-tb all"        onclick="S_selectAll()">✓ Chọn tất cả</button>
-              <button class="btn-tb none"       onclick="S_selectNone()">✕ Bỏ chọn tất cả</button>
-              <button class="btn-tb short-only" onclick="S_selectShortOnly()">Short only</button>
-              <button class="btn-tb long-only"  onclick="S_selectLongOnly()">Long only</button>
-              <span class="fill-count" id="S_fill-count"></span>
+        <div class="col-right">
+          <div class="panel">
+            <div class="tabs">
+              <button class="tab active" onclick="S_switchTab('entries')">Lệnh vào</button>
+              <button class="tab" onclick="S_switchTab('sim')">Mô phỏng PnL</button>
+              <button class="tab" onclick="S_switchTab('chart')">Biểu đồ</button>
+              <button class="tab" onclick="S_switchTab('risk')">Rủi ro</button>
             </div>
-            <table id="S_entry-table"></table>
-          </div>
-          <div class="tab-content" id="S_tab-sim">
-            <div class="sim-controls">
-              <label>Giá exit:</label>
-              <input type="number" id="S_sim-price" step="0.0001" placeholder="Nhập giá...">
-              <button class="btn-sim" onclick="S_simulate()">Tính PnL</button>
+            
+            <div class="tab-content active" id="S_tab-entries">
+              <div class="table-toolbar">
+                <span class="toolbar-label">Lệnh khớp:</span>
+                <button class="btn-tb all"        onclick="S_selectAll()">✓ Chọn tất cả</button>
+                <button class="btn-tb none"       onclick="S_selectNone()">✕ Bỏ tất cả</button>
+                <button class="btn-tb short-only" onclick="S_selectShortOnly()">Short only</button>
+                <button class="btn-tb long-only"  onclick="S_selectLongOnly()">Long only</button>
+                <span class="fill-count" id="S_fill-count"></span>
+              </div>
+              <div class="table-wrap">
+                <table id="S_entry-table"></table>
+              </div>
             </div>
-            <div id="S_sim-result"></div>
-          </div>
-          <div class="tab-content" id="S_tab-chart">
-            <div class="chart-wrap"><canvas id="S_canvas-pnl"></canvas></div>
-            <div id="S_chart-legend" style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted2)"></div>
-          </div>
-          <div class="tab-content" id="S_tab-risk">
-            <div id="S_risk-content"></div>
+            
+            <div class="tab-content" id="S_tab-sim">
+              <div class="sim-controls">
+                <label>Giá exit:</label>
+                <input type="number" id="S_sim-price" step="0.0001" placeholder="Nhập giá...">
+                <button class="btn-sim" onclick="S_simulate()">Tính PnL</button>
+              </div>
+              <div class="sim-scroll" id="S_sim-result"></div>
+            </div>
+            
+            <div class="tab-content" id="S_tab-chart">
+              <div class="chart-wrap"><canvas id="S_canvas-pnl"></canvas></div>
+              <div id="S_chart-legend" style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:var(--muted2)"></div>
+            </div>
+            
+            <div class="tab-content sim-scroll" id="S_tab-risk">
+              <div id="S_risk-content"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-</div><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
+
+// ══════════════════════════════════════════════════════════════
+//  XỬ LÝ ĐỔI GIAO DIỆN (TOGGLE LAYOUT)
+// ══════════════════════════════════════════════════════════════
+function toggleLayout() {
+  const isMobile = document.body.classList.contains('layout-desktop');
+  
+  if (isMobile) {
+    document.body.classList.remove('layout-desktop');
+    document.body.classList.add('layout-mobile');
+    document.getElementById('btn-toggle-layout').innerHTML = '💻 Đổi sang Desktop';
+  } else {
+    document.body.classList.remove('layout-mobile');
+    document.body.classList.add('layout-desktop');
+    document.getElementById('btn-toggle-layout').innerHTML = '📱 Đổi sang Mobile';
+  }
+
+  // Chờ DOM cập nhật layout mới rồi vẽ lại biểu đồ để khớp kích thước
+  setTimeout(() => {
+    if (document.getElementById('L_tab-chart').classList.contains('active')) L_drawChart();
+    if (document.getElementById('S_tab-chart').classList.contains('active')) S_drawChart();
+  }, 100);
+}
+
+// Tự động nhận diện màn hình nhỏ khi vừa load trang
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.innerWidth <= 900) {
+    document.body.classList.remove('layout-desktop');
+    document.body.classList.add('layout-mobile');
+    document.getElementById('btn-toggle-layout').innerHTML = '💻 Đổi sang Desktop';
+  }
+});
+
 // ══════════════════════════════════════════════════════════════
 //  BINANCE CROSS MARGIN LIQUIDATION CALCULATOR (HEDGE MODE)
 // ══════════════════════════════════════════════════════════════
@@ -436,22 +547,11 @@ function calcCrossLiq(lCoin, lAvg, sCoin, sAvg, walletBalance) {
     let num = (lCoin * lAvg) - (sCoin * sAvg) - walletBalance;
     let den = 0;
 
-    // Hedge mode rules: MMR is dynamically scaled to largest position
-    if (lCoin > sCoin) {
-      num -= cumL;
-      den = lCoin - sCoin - (lCoin * mmrL);
-    } else if (sCoin > lCoin) {
-      num -= cumS;
-      den = lCoin - sCoin - (sCoin * mmrS); 
-    } else {
-      num -= cumL; 
-      den = lCoin - sCoin - (lCoin * mmrL); 
-    }
+    if (lCoin > sCoin) { num -= cumL; den = lCoin - sCoin - (lCoin * mmrL); } 
+    else if (sCoin > lCoin) { num -= cumS; den = lCoin - sCoin - (sCoin * mmrS); } 
+    else { num -= cumL; den = lCoin - sCoin - (lCoin * mmrL); }
 
-    if (den !== 0) {
-      const liq = num / den;
-      if (liq > 0) crossLiq = liq;
-    }
+    if (den !== 0) { const liq = num / den; if (liq > 0) crossLiq = liq; }
   }
   return crossLiq;
 }
@@ -532,32 +632,41 @@ function L_getFilledSummary() {
 }
 
 function L_calculate() {
-  const coin=L_g('L_coin').value||'SYMBOL', balance=+L_g('L_balance').value, budget=+L_g('L_budget').value, leverage=+L_g('L_leverage').value, e1=+L_g('L_entry1').value, pct_drop=+L_g('L_pct_drop').value, n_long=+L_g('L_n_long').value, n_short=+L_g('L_n_short').value, short_offset=+L_g('L_short_offset').value, size_mult=+L_g('L_size_mult').value;
+  const coin=L_g('L_coin').value||'SYMBOL', balance=+L_g('L_balance').value, budget=+L_g('L_budget').value, leverage=+L_g('L_leverage').value, e1=+L_g('L_entry1').value, pct_drop=+L_g('L_pct_drop').value, n_long=+L_g('L_n_long').value, n_short=+L_g('L_n_short').value, short_offset=+L_g('L_short_offset').value, size_mult=+L_g('L_size_mult').value, sl_pct=+L_g('L_sl_pct').value;
   const long=L_calcDCA(e1,n_long,leverage,budget,pct_drop,size_mult,0);
   const short=L_calcShortDCA(e1,n_short,leverage,budget,pct_drop,size_mult,short_offset,long.sizes[0]);
-  L_state={coin,balance,budget,leverage,e1,pct_drop,n_long,n_short,long,short,size_mult};
+  L_state={coin,balance,budget,leverage,e1,pct_drop,n_long,n_short,long,short,size_mult,sl_pct};
   L_filled=new Array(n_long+n_short).fill(true);
-  L_g('L_results').style.display='block'; L_g('L_sim-price').value=e1; L_g('L_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  L_g('L_results').style.display='flex';
+  L_g('L_sim-price').value=e1; L_g('L_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
   L_onLivePrice(); L_renderTable(); L_updateStats(); L_drawChart();
 }
 
 function L_renderTable() {
-  const {long,short,n_long,n_short}=L_state; const {lf,sf,liLong,liShort}=L_getFilledSummary();
-  let h=`<tr><th>Khớp</th><th>Lệnh</th><th>Giá vào</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr>`;
-  const tickSvg=(clr)=>`<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+  const {long,short,n_long,n_short,sl_pct}=L_state; const {lf,sf,liLong,liShort}=L_getFilledSummary();
+  let h=`<thead><tr><th>Khớp</th><th>Lệnh</th><th>Giá vào / Giá SL</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr></thead><tbody>`;
+  const tickSvg=(clr)=>`<svg width="10" height="10" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   let cumKl=0;
   for(let i=0;i<n_long;i++){
     const idx=i,on=L_filled[idx]; if(on)cumKl+=long.kls[i]; const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';
     h+=`<tr class="${rc}" id="L_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="L_toggleFill(${idx})">${on?tickSvg('#00e5a0'):''}</div></div></td><td>Long ${i+1} <span class="tag tag-l">L</span></td><td>${long.prices[i].toFixed(6)}</td><td>${long.sizes[i].toFixed(4)}</td><td>${long.kls[i].toFixed(4)}</td><td>${long.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;
   }
-  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`; cumKl=0;
+  cumKl=0;
   for(let i=0;i<n_short;i++){
     const idx=n_long+i,on=L_filled[idx]; if(on)cumKl+=short.kls[i]; const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';
     h+=`<tr class="${rc}" id="L_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="L_toggleFill(${idx})">${on?tickSvg('#ff4d6a'):''}</div></div></td><td>Short ${i+1} <span class="tag tag-s">S</span></td><td>${short.prices[i].toFixed(6)}</td><td>${short.sizes[i].toFixed(4)}</td><td>${short.kls[i].toFixed(4)}</td><td>${short.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;
   }
   const lSz=lf?liLong.reduce((a,i)=>a+long.sizes[i],0):0, sSz=sf?liShort.reduce((a,i)=>a+short.sizes[i],0):0;
-  h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Long (${liLong.length}/${n_long})</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
-  h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Short (${liShort.length}/${n_short})</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Tổng Khớp Long</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Tổng Khớp Short</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
+  
+  if (n_long > 0) {
+    const sl_price = long.prices[n_long - 1] * (1 - sl_pct / 100);
+    h+=`<tr class="row-sl"><td style="text-align:center">🛑</td><td>Đóng Toàn Bộ Vị Thế LONG <span class="tag tag-s">S</span></td><td>${sl_price.toFixed(6)}</td><td>ALL</td><td>ALL</td><td>ALL</td><td>—</td></tr>`;
+    h+=`<tr class="row-sl"><td style="text-align:center">🛑</td><td>Đóng Toàn Bộ Vị Thế SHORT <span class="tag tag-l">L</span></td><td>${sl_price.toFixed(6)}</td><td>ALL</td><td>ALL</td><td>ALL</td><td>—</td></tr>`;
+  }
+
+  h+=`</tbody>`;
   L_g('L_entry-table').innerHTML=h;
   L_g('L_fill-count').innerHTML=`Đã khớp: <span>${liLong.length} Long + ${liShort.length} Short</span> / ${n_long+n_short} lệnh`;
 }
@@ -583,8 +692,8 @@ function L_updateStats(){
   }
 
   L_g('L_stat-row').innerHTML=`
-    <div class="stat"><div class="lbl">New Entry Long</div><div class="val b">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
-    <div class="stat"><div class="lbl">New Entry Short</div><div class="val a">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">New Entry Long</div><div class="val b">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:12px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">New Entry Short</div><div class="val a">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:12px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
     <div class="stat"><div class="lbl">Giá Cháy (Cross)</div><div class="val ${liqClass}">${liqMsg}</div><div class="sub-val">${subLiq}</div></div>
     <div class="stat"><div class="lbl">Tổng KL khớp</div><div class="val">${((lf?lf.totalKl:0)+(sf?sf.totalKl:0)).toFixed(2)}</div><div class="sub-val">USDT position</div></div>`;
   L_updateRisk(lf,sf,crossLiq,cL,cS);
@@ -610,9 +719,9 @@ function L_updateRisk(lf,sf,crossLiq,cL,cS){
     <div class="result-row"><span class="k">Phí Short</span><span class="v a">${sf?sf.fee.toFixed(4):'0.0000'} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((lf?lf.fee:0)+(sf?sf.fee:0)).toFixed(4)} USDT</span></div>
   </div>
-  ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
-  ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
-  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin (Hedge Mode) sử dụng chung Wallet Balance. Bậc MMR được Auto-scale theo tổng Notional Binance (0.4% → 10%).</div>`;
+  ${rp>80?`<div class="warn liq-warn">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
+  ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
+  <div class="warn">ℹ Giá cháy áp dụng Cross Margin (Hedge Mode) sử dụng chung Wallet Balance. Bậc MMR được Auto-scale theo tổng Notional Binance (0.4% → 10%).</div>`;
 }
 
 function L_onLivePrice(){
@@ -682,11 +791,11 @@ function L_simulate(){
     <div class="result-row"><span class="k">Giá exit</span><span class="v b">${exitPrice.toFixed(6)}</span></div>
     <div class="result-row"><span class="k">Lệnh tính</span><span style="font-size:11px">${liLong.length?`<span style="color:var(--green)">${liLong.length} Long</span>`:''} ${liLong.length&&liShort.length?'+':''} ${liShort.length?`<span style="color:var(--red)">${liShort.length} Short</span>`:''}</span></div>
     <div class="sep"></div>
-    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
+    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:10px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:10px">không có lệnh</span></div>`}
     <div class="sep"></div>
-    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
+    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:10px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:10px">không có lệnh</span></div>`}
     <div class="sep"></div>
-    <div class="result-row"><span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
+    <div class="result-row"><span class="k" style="font-size:12px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:16px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
     <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((lf?lf.fee:0)+(sf?sf.fee:0),4)} USDT</span></div>
   </div>
@@ -695,7 +804,7 @@ function L_simulate(){
 
 function L_drawChart(){
   if(!L_state)return; const {e1}=L_state,{lf,sf,crossLiq}=L_getFilledSummary();
-  if(!lf&&!sf){if(L_pnlChart){L_pnlChart.destroy();L_pnlChart=null;}L_g('L_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
+  if(!lf&&!sf){if(L_pnlChart){L_pnlChart.destroy();L_pnlChart=null;}L_g('L_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:11px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
   const refLiq=crossLiq ? crossLiq : e1*0.5;
   const priceMin=Math.max(refLiq*0.6,0.0001),priceMax=e1*1.35,steps=120;
   const labels=[],ldArr=[],sdArr=[],tdArr=[];
@@ -705,8 +814,8 @@ function L_drawChart(){
   if(lf)datasets.push({label:'Long PnL',data:ldArr,borderColor:'#00e5a0',borderWidth:1.5,pointRadius:0,tension:0.3});
   if(sf)datasets.push({label:'Short PnL',data:sdArr,borderColor:'#ff4d6a',borderWidth:1.5,pointRadius:0,tension:0.3});
   if(lf&&sf)datasets.push({label:'Tổng PnL',data:tdArr,borderColor:'#4d9fff',borderWidth:2.5,pointRadius:0,tension:0.3,borderDash:[5,3]});
-  L_pnlChart=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:i=>`Giá: ${i[0].label}`,label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}},scales:{x:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}}}});
-  const li=[];if(lf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);if(sf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);if(lf&&sf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
+  L_pnlChart=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:i=>`Giá: ${i[0].label}`,label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}},scales:{x:{ticks:{color:'#5a6070',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#5a6070',font:{size:9,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}}}});
+  const li=[];if(lf)li.push(`<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);if(sf)li.push(`<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);if(lf&&sf)li.push(`<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
   L_g('L_chart-legend').innerHTML=li.join('');
 }
 
@@ -767,26 +876,35 @@ function S_getFilledSummary(){
 }
 
 function S_calculate(){
-  const coin=S_g('S_coin').value||'SYMBOL',balance=+S_g('S_balance').value,budget=+S_g('S_budget').value,leverage=+S_g('S_leverage').value,e1=+S_g('S_entry1').value,pct_rise=+S_g('S_pct_rise').value,n_short=+S_g('S_n_short').value,n_long=+S_g('S_n_long').value,long_offset=+S_g('S_long_offset').value,size_mult=+S_g('S_size_mult').value;
+  const coin=S_g('S_coin').value||'SYMBOL',balance=+S_g('S_balance').value,budget=+S_g('S_budget').value,leverage=+S_g('S_leverage').value,e1=+S_g('S_entry1').value,pct_rise=+S_g('S_pct_rise').value,n_short=+S_g('S_n_short').value,n_long=+S_g('S_n_long').value,long_offset=+S_g('S_long_offset').value,size_mult=+S_g('S_size_mult').value,sl_pct=+S_g('S_sl_pct').value;
   const short=S_calcShortDCA(e1,n_short,leverage,budget,pct_rise,size_mult);
   const long=S_calcLongDCA(e1,n_long,leverage,budget,pct_rise,size_mult,long_offset,short.sizes[0]);
-  S_state={coin,balance,budget,leverage,e1,pct_rise,n_short,n_long,short,long,size_mult};
+  S_state={coin,balance,budget,leverage,e1,pct_rise,n_short,n_long,short,long,size_mult,sl_pct};
   S_filled=new Array(n_short+n_long).fill(true);
-  S_g('S_results').style.display='block'; S_g('S_sim-price').value=e1; S_g('S_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
+  S_g('S_results').style.display='flex';
+  S_g('S_sim-price').value=e1; S_g('S_live-coin-tag').textContent=(coin||'USDT').replace(/USDT$/,'')+'/USDT';
   S_onLivePrice();S_renderTable();S_updateStats();S_drawChart();
 }
 
 function S_renderTable(){
-  const{short,long,n_short,n_long}=S_state,{sf,lf,liShort,liLong}=S_getFilledSummary();
-  let h=`<tr><th>Khớp</th><th>Lệnh</th><th>Giá vào</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr>`;
-  const tickSvg=(clr)=>`<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+  const{short,long,n_short,n_long,sl_pct}=S_state,{sf,lf,liShort,liLong}=S_getFilledSummary();
+  let h=`<thead><tr><th>Khớp</th><th>Lệnh</th><th>Giá vào / Giá SL</th><th>Size USDT</th><th>KL USDT</th><th>KL Coin</th><th>KL tích lũy</th></tr></thead><tbody>`;
+  const tickSvg=(clr)=>`<svg width="10" height="10" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.2,8.5 9.5,2" stroke="${clr}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   let cumKl=0;
   for(let i=0;i<n_short;i++){const on=S_filled[i];if(on)cumKl+=short.kls[i];const rc=on?'row-filled-short':'row-unfilled',cc=on?'chk-box on-short':'chk-box';h+=`<tr class="${rc}" id="S_row-${i}"><td><div class="chk"><div class="${cc}" onclick="S_toggleFill(${i})">${on?tickSvg('#ff4d6a'):''}</div></div></td><td>Short ${i+1} <span class="tag tag-s">S</span></td><td>${short.prices[i].toFixed(6)}</td><td>${short.sizes[i].toFixed(4)}</td><td>${short.kls[i].toFixed(4)}</td><td>${short.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;}
-  h+=`<tr><td colspan="7" style="padding:3px;border-bottom:1px solid var(--border)"></td></tr>`;cumKl=0;
+  cumKl=0;
   for(let i=0;i<n_long;i++){const idx=n_short+i,on=S_filled[idx];if(on)cumKl+=long.kls[i];const rc=on?'row-filled-long':'row-unfilled',cc=on?'chk-box on-long':'chk-box';h+=`<tr class="${rc}" id="S_row-${idx}"><td><div class="chk"><div class="${cc}" onclick="S_toggleFill(${idx})">${on?tickSvg('#00e5a0'):''}</div></div></td><td>Long ${i+1} <span class="tag tag-l">L</span></td><td>${long.prices[i].toFixed(6)}</td><td>${long.sizes[i].toFixed(4)}</td><td>${long.kls[i].toFixed(4)}</td><td>${long.coins[i].toFixed(6)}</td><td>${on?cumKl.toFixed(2):'—'}</td></tr>`;}
   const sSz=sf?liShort.reduce((a,i)=>a+short.sizes[i],0):0,lSz=lf?liLong.reduce((a,i)=>a+long.sizes[i],0):0;
-  h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Short (${liShort.length}/${n_short})</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
-  h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Long (${liLong.length}/${n_long})</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--red)">Tổng Khớp Short</td><td>—</td><td>${sf?sSz.toFixed(4):'—'}</td><td>${sf?sf.totalKl.toFixed(4):'—'}</td><td>${sf?sf.totalCoins.toFixed(6):'—'}</td><td>${sf?sf.totalKl.toFixed(2):'—'}</td></tr>`;
+  h+=`<tr class="row-total"><td></td><td style="color:var(--green)">Tổng Khớp Long</td><td>—</td><td>${lf?lSz.toFixed(4):'—'}</td><td>${lf?lf.totalKl.toFixed(4):'—'}</td><td>${lf?lf.totalCoins.toFixed(6):'—'}</td><td>${lf?lf.totalKl.toFixed(2):'—'}</td></tr>`;
+  
+  if (n_short > 0) {
+    const sl_price = short.prices[n_short - 1] * (1 + sl_pct / 100);
+    h+=`<tr class="row-sl"><td style="text-align:center">🛑</td><td>Đóng Toàn Bộ Vị Thế SHORT <span class="tag tag-l">L</span></td><td>${sl_price.toFixed(6)}</td><td>ALL</td><td>ALL</td><td>ALL</td><td>—</td></tr>`;
+    h+=`<tr class="row-sl"><td style="text-align:center">🛑</td><td>Đóng Toàn Bộ Vị Thế LONG <span class="tag tag-s">S</span></td><td>${sl_price.toFixed(6)}</td><td>ALL</td><td>ALL</td><td>ALL</td><td>—</td></tr>`;
+  }
+
+  h+=`</tbody>`;
   S_g('S_entry-table').innerHTML=h;
   S_g('S_fill-count').innerHTML=`Đã khớp: <span>${liShort.length} Short + ${liLong.length} Long</span> / ${n_short+n_long} lệnh`;
 }
@@ -812,8 +930,8 @@ function S_updateStats(){
   }
 
   S_g('S_stat-row').innerHTML=`
-    <div class="stat"><div class="lbl">New Entry Short</div><div class="val r">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
-    <div class="stat"><div class="lbl">New Entry Long</div><div class="val g">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:13px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">New Entry Short</div><div class="val r">${sf?sf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:12px">—</span>'}</div><div class="sub-val">${sf?sf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
+    <div class="stat"><div class="lbl">New Entry Long</div><div class="val g">${lf?lf.newEntry.toFixed(4):'<span style="color:var(--muted);font-size:12px">—</span>'}</div><div class="sub-val">${lf?lf.totalCoins.toFixed(4)+' coin':'chưa có lệnh'}</div></div>
     <div class="stat"><div class="lbl">Giá Cháy (Cross)</div><div class="val ${liqClass}">${liqMsg}</div><div class="sub-val">${subLiq}</div></div>
     <div class="stat"><div class="lbl">Tổng KL khớp</div><div class="val">${((sf?sf.totalKl:0)+(lf?lf.totalKl:0)).toFixed(2)}</div><div class="sub-val">USDT position</div></div>`;
   S_updateRisk(sf,lf,crossLiq,cL,cS);
@@ -839,9 +957,9 @@ function S_updateRisk(sf,lf,crossLiq,cL,cS){
     <div class="result-row"><span class="k">Phí Long</span><span class="v a">${lf?lf.fee.toFixed(4):'0.0000'} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí</span><span class="v a">${((sf?sf.fee:0)+(lf?lf.fee:0)).toFixed(4)} USDT</span></div>
   </div>
-  ${rp>80?`<div class="warn liq-warn" style="margin-top:10px">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
-  ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn" style="margin-top:8px">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
-  <div class="warn" style="margin-top:8px">ℹ Giá cháy áp dụng Cross Margin (Hedge Mode) sử dụng chung Wallet Balance. Bậc MMR được Auto-scale theo tổng Notional Binance (0.4% → 10%).</div>`;
+  ${rp>80?`<div class="warn liq-warn">⚠ Margin vượt 80% balance — rủi ro thanh lý rất cao!</div>`:''}
+  ${crossLiq&&liqPct>0&&liqPct<15?`<div class="warn liq-warn">⚠ Khoảng cách đến liq chỉ ${liqPct.toFixed(1)}% — cẩn thận!</div>`:''}
+  <div class="warn">ℹ Giá cháy áp dụng Cross Margin (Hedge Mode) sử dụng chung Wallet Balance. Bậc MMR được Auto-scale theo tổng Notional Binance (0.4% → 10%).</div>`;
 }
 
 function S_onLivePrice(){
@@ -858,7 +976,7 @@ function S_onLivePrice(){
   const total=psNet+plNet, rorS=sf?psNet/(sf.totalKl/leverage)*100:0, rorL=lf?plNet/(lf.totalKl/leverage)*100:0, dw=balance+total;
   
   const elPS=S_g('S_ls-pnl-short'); if(sf){elPS.className='ls-val '+(psNet>=0?'g':'r');elPS.textContent=fmt(psNet)+' U';S_g('S_ls-ror-short').textContent=fmt(rorS,1)+'%';}else{elPS.className='ls-val muted';elPS.textContent='—';S_g('S_ls-ror-short').textContent='';}
-  const elPL=S_g('S_ls-pnl-long'); if(lf){elPL.className='ls-val '+(plNet>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';S_g('S_ls-ror-long').textContent=fmt(rorL,1)+'%';}else{elPL.className='ls-val muted';elPL.textContent='—';S_g('S_ls-ror-long').textContent='';}
+  const elPL=S_g('S_ls-pnl-long'); if(lf){elPL.className='ls-val '+(plRaw>=0?'g':'r');elPL.textContent=fmt(plNet)+' U';S_g('S_ls-ror-long').textContent=fmt(rorL,1)+'%';}else{elPL.className='ls-val muted';elPL.textContent='—';S_g('S_ls-ror-long').textContent='';}
   const elPT=S_g('S_ls-pnl-total'); if(sf||lf){elPT.className='ls-val '+(total>=0?'g':'r');elPT.textContent=fmt(total)+' U';const elDw=S_g('S_ls-dw');elDw.textContent='Dư ví: '+fmt(dw)+' U';elDw.style.color=dw>=0?'var(--green)':'var(--red)';}else{elPT.className='ls-val muted';elPT.textContent='—';S_g('S_ls-dw').textContent='';}
   
   const firstEntry=short.prices[0],lastEntry=short.prices[n_short-1];
@@ -910,11 +1028,11 @@ function S_simulate(){
     <div class="result-row"><span class="k">Giá exit</span><span class="v b">${exitPrice.toFixed(6)}</span></div>
     <div class="result-row"><span class="k">Lệnh tính</span><span style="font-size:11px">${liShort.length?`<span style="color:var(--red)">${liShort.length} Short</span>`:''} ${liShort.length&&liLong.length?'+':''} ${liLong.length?`<span style="color:var(--green)">${liLong.length} Long</span>`:''}</span></div>
     <div class="sep"></div>
-    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
+    ${sf?`<div class="result-row"><span class="k">PnL Short (trước phí)</span><span class="v ${psRaw>=0?'g':'r'}">${fmt(psRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Short (sau phí)</span><span class="v ${psNet>=0?'g':'r'}">${fmt(psNet)} USDT <span style="font-size:10px;opacity:.7">(${fmt(rorS,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Short</span><span style="color:var(--muted);font-size:10px">không có lệnh</span></div>`}
     <div class="sep"></div>
-    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:11px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:11px">không có lệnh</span></div>`}
+    ${lf?`<div class="result-row"><span class="k">PnL Long (trước phí)</span><span class="v ${plRaw>=0?'g':'r'}">${fmt(plRaw)} USDT</span></div><div class="result-row"><span class="k">PnL Long (sau phí)</span><span class="v ${plNet>=0?'g':'r'}">${fmt(plNet)} USDT <span style="font-size:10px;opacity:.7">(${fmt(rorL,1)}%)</span></span></div>`:`<div class="result-row"><span class="k">Long</span><span style="color:var(--muted);font-size:10px">không có lệnh</span></div>`}
     <div class="sep"></div>
-    <div class="result-row"><span class="k" style="font-size:13px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:20px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
+    <div class="result-row"><span class="k" style="font-size:12px;color:var(--text);font-weight:700">TỔNG LÃI / LỖ</span><span style="font-size:16px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'}">${fmt(total)} USDT</span></div>
     <div class="result-row"><span class="k">Dư ví sau giao dịch</span><span class="v ${dw>=0?'g':'r'}">${fmt(dw)} USDT</span></div>
     <div class="result-row"><span class="k">Tổng phí đã trả</span><span class="v a">${fmt((sf?sf.fee:0)+(lf?lf.fee:0),4)} USDT</span></div>
   </div>
@@ -923,7 +1041,7 @@ function S_simulate(){
 
 function S_drawChart(){
   if(!S_state)return; const{sf,lf,crossLiq}=S_getFilledSummary();
-  if(!sf&&!lf){if(S_pnlChart){S_pnlChart.destroy();S_pnlChart=null;}S_g('S_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:12px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
+  if(!sf&&!lf){if(S_pnlChart){S_pnlChart.destroy();S_pnlChart=null;}S_g('S_chart-legend').innerHTML=`<span style="color:var(--muted);font-size:11px">Tick ít nhất 1 lệnh để xem biểu đồ.</span>`;return;}
   const{e1}=S_state,refLiq=crossLiq ? crossLiq : e1*1.5;
   const priceMin=Math.max(e1*0.65,0.0001),priceMax=refLiq*1.1,steps=120;
   const labels=[],sdArr=[],ldArr=[],tdArr=[];
@@ -933,8 +1051,8 @@ function S_drawChart(){
   if(sf)datasets.push({label:'Short PnL',data:sdArr,borderColor:'#ff4d6a',borderWidth:1.5,pointRadius:0,tension:0.3});
   if(lf)datasets.push({label:'Long PnL',data:ldArr,borderColor:'#00e5a0',borderWidth:1.5,pointRadius:0,tension:0.3});
   if(sf&&lf)datasets.push({label:'Tổng PnL',data:tdArr,borderColor:'#4d9fff',borderWidth:2.5,pointRadius:0,tension:0.3,borderDash:[5,3]});
-  S_pnlChart=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:i=>`Giá: ${i[0].label}`,label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}},scales:{x:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#5a6070',font:{size:10,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}}}});
-  const li=[];if(sf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);if(lf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);if(sf&&lf)li.push(`<span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
+  S_pnlChart=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:i=>`Giá: ${i[0].label}`,label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)} USDT`}}},scales:{x:{ticks:{color:'#5a6070',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#5a6070',font:{size:9,family:'JetBrains Mono'},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.06)'}}}}});
+  const li=[];if(sf)li.push(`<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#ff4d6a;display:inline-block"></span>Short PnL</span>`);if(lf)li.push(`<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#00e5a0;display:inline-block"></span>Long PnL</span>`);if(sf&&lf)li.push(`<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#4d9fff;display:inline-block"></span>Tổng PnL</span>`);
   S_g('S_chart-legend').innerHTML=li.join('');
 }
 
@@ -946,7 +1064,6 @@ function S_switchTab(name){
   if(name==='chart')setTimeout(S_drawChart,50);
 }
 
-// Chạy khởi tạo cả 2 tab ngay từ đầu để đảm bảo không lỗi khi chuyển qua lại
 window.onload = () => { 
   L_calculate(); 
   S_calculate(); 
